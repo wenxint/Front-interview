@@ -1,0 +1,158 @@
+/* 公共变量 */
+
+@main-color: #e93b3d;
+@border-color: #ccc;
+@a-color: #666;
+
+/* 样式重置 */
+
+* {
+    margin: 0px;
+    padding: 0px;
+    /*在移动端设置盒模型border-box 为了防止元素加边框或者padding出现水平滚动条*/
+    box-sizing: border-box;
+    /* 去除移动端按住元素的时候会出现高亮背景色 */
+    -webkit-tap-highlight-color: transparent;
+    /* 去掉所有移动端内边框 */
+    outline: none;
+}
+
+a {
+    color: @a-color;
+    text-decoration: none;
+}
+
+li {
+    list-style: none;
+}
+
+input {
+    border: 0;
+}
+
+img {
+    /* 解决图片底部3px的间隙 为了让图片的对齐方式和文本一致*/
+    vertical-align: middle;
+}
+
+i {
+    font-style: normal;
+}
+
+
+/* 公共样式 */
+
+.pull-left {
+    float: left;
+}
+
+.pull-right {
+    float: right;
+}
+
+.clearfix::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+
+/* 公共的图标样式 */
+/* 属性选择器 匹配类名以icon-开头 或者 中间包含了空格icon-的元素 */
+[class^="icon-"],
+[class*=" icon-"] {
+	 /* 公共的精灵图 */
+    background-image: url(../images/sprites.png);
+    /* 设置背景图的大小 图片要缩小一半来写 背景图就设置背景图大小 */
+    background-size: 200px 200px;
+    background-origin: content-box;
+    background-clip: content-box;
+}
+
+
+.border-left{
+	border-left: 1px solid @border-color;
+}
+.border-right{
+	border-right: 1px solid @border-color;
+}
+.border-top{
+	border-top: 1px solid @border-color;
+}
+.border-bottom{
+	border-bottom: 1px solid @border-color;
+}
+
+
+/* 头部区域的样式 */
+
+#header {
+    /* 头部是固定定位不会参照父元素宽度 参照整个浏览器页面的宽度 也可以给头部设置最大宽度 */
+    max-width: 750px;
+    background-color: #ccc;
+    display: flex;
+    top: 0px;
+    width: 100%;
+    background-color: rgba(222, 24, 27, 0);
+    z-index: 999;
+    position: fixed;
+    .icon-logo {
+        display: block;
+        /* 图片本身是2倍图 量了116变成58 量了高度58变成29 */
+        width: 58px;
+        height: 23px;
+        margin-top: 3px;
+        background-position: 0 -110px;
+    }
+    form {
+        flex: 1;
+        margin-left: 10px;
+        position: relative;
+        .icon-search {
+            position: absolute;
+            left: 5px;
+            top: 6px;
+            width: 20px;
+            height: 20px;
+            background-position: -60px -110px;
+        }
+        >input {
+            width: 100%;
+            height: 30px;
+            border-radius: 15px;
+            padding-left: 30px;
+        }
+    }
+    .login {
+        width: 60px;
+        text-align: center;
+        line-height: 30px;
+        color: #fff;
+    }
+}
+
+
+/* 底部区域的样式 */
+
+#footer {
+    width: 100%;
+    background: #fff;
+    z-index: 999;
+    max-width: 750px;
+    position: fixed;
+    bottom: 0px;
+    >ul {
+        display: flex;
+        >li {
+            flex: 1;
+            >a {
+                display: block;
+                text-align: center;
+                >img {
+                    width: 65px;
+                    height: 50px;
+                }
+            }
+        }
+    }
+}

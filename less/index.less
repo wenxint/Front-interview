@@ -1,0 +1,190 @@
+/* 在主页的样式去引入公共的样式文件 */
+
+@import 'base.less';
+body {
+    /* 给body设置最大宽度让页面在PC端不会太大 */
+    max-width: 750px;
+    /* 让body居中设置居中 块级居中使用margin:0 auto */
+    margin: 0px auto;
+}
+
+#header{
+     padding: 7px 10px;
+}
+
+#slide {
+    img {
+        width: 100%;
+    }
+    /* 修改小圆点样式 */
+    .swiper-pagination-bullet {
+        background-color: transparent;
+        opacity: 1;
+        border: 1px solid #fff;
+        width: 8px;
+        height: 8px;
+        box-sizing: border-box;
+    }
+    .swiper-pagination-bullet-active {
+        background-color: #fff;
+    }
+}
+
+
+/* 导航条区域的样式 */
+
+#nav {
+    ul {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 10px;
+        li {
+            /* 当flex和百分比一起使用的时候 如果当前设置的百分比一行能够放的下才会生效 
+			如果百分比加起来超过了一行大小 不会生效 如果要生效给父元素设置flex换行*/
+            width: 25%;
+            >a {
+                display: block;
+                text-align: center;
+                >img {
+                    width: 40px;
+                    height: 40px;
+                }
+                >p {
+                    font-size: 14px;
+                    line-height: 30px;
+                }
+            }
+        }
+    }
+}
+
+
+/* 主体商品的样式 */
+
+#main {
+    background-color: #f5f5f5;
+    padding: 10px;
+    /* 给main添加padding-bottom60px 让底部挡住padding部分 */
+    padding-bottom: 60px;
+    /* 秒杀 */
+    .seckill {
+        background-color: #fff;
+        box-shadow: 0px 0px 1px #ccc;
+        .title {
+            display: flex;
+            position: relative;
+            line-height: 30px;
+            .naozhong {
+                width: 20px;
+                height: 25px;
+                margin-left: 5px;
+                margin-top: 2px;
+            }
+            .name {
+                margin-left: 10px;
+                font-size: 14px;
+                color: @main-color;
+            }
+            .down-time {
+                margin-left: 10px;
+                >span {
+                    background-color: #000;
+                    color: #fff;
+                    display: inline-block;
+                    width: 15px;
+                    height: 15px;
+                    /* 注意父元素设置了行高30px会继承 高度不需要30px只需要15px修改当前span行高为15px */
+                    line-height: 15px;
+                    text-align: center;
+                    &:nth-child(3n) {
+                        background-color: #fff;
+                        color: #000;
+                    }
+                }
+            }
+            .more {
+                position: absolute;
+                right: 10px;
+                font-size: 14px;
+            }
+        }
+        .content {
+            >ul {
+                display: flex;
+                >li {
+                    flex: 1;
+                    /* border-right: 1px solid @border-color;
+					&:last-child{
+						border-right: none;
+					} */
+                    &+li {
+                        border-left: 1px solid @border-color;
+                    }
+                    >a {
+                        display: block;
+                        text-align: center;
+                        >img {
+                            width: 110px;
+                        }
+                        >p {
+                            font-size: 12px;
+                            &:nth-of-type(1) {
+                                color: @main-color;
+                            }
+                            &:nth-of-type(2) {
+                                color: @border-color;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /* 京东超市 */
+    .jd-market {
+        margin-top: 10px;
+        background-color: #fff;
+        box-shadow: 0px 0px 1px @border-color;
+        .title {
+            border-bottom: 1px solid @border-color;
+            >h4 {
+                font-weight: normal;
+                padding-left: 30px;
+                line-height: 30px;
+                position: relative;
+                &::before {
+                    content: '';
+                    width: 4px;
+                    height: 15px;
+                    background-color: @main-color;
+                    position: absolute;
+                    left: 15px;
+                    top: 7px;
+                }
+            }
+        }
+        .content {
+            display: flex;
+            .left {
+                flex: 1;
+                >a {
+                    display: block;
+                    >img {
+                        width: 100%;
+                    }
+                }
+            }
+            .right {
+                flex: 1;
+                > a {
+                    display: block;
+                    >img {
+                        width: 100%;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
