@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>IntersectionObserver 可视区检测演示</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background: #f7f7f7;
+      }
+      .container {
+        width: 80%;
+        margin: 0 auto;
+        padding: 40px 0;
+      }
+      .spacer {
+        height: 2000px;
+        background: linear-gradient(90deg, #e0e0e0 0%, #f7f7f7 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        font-size: 2em;
+      }
+      .observe-target {
+        width: 100%;
+        height: 2000px;
+        background: #4f8cff;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2em;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        margin: 40px 0;
+        transition: background 0.3s;
+      }
+      .in-view {
+        background: #43d97a !important;
+        box-shadow: 0 4px 24px rgba(67, 217, 122, 0.18);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="spacer">向下滚动</div>
+      <div id="target" class="observe-target">观察目标元素</div>
+      <div class="spacer">继续滚动</div>
+    </div>
+
+    <script>
+      /**
+       * IntersectionObserver演示
+       * 当目标元素进入可视区时变色，并在控制台输出详细信息
+       */
+      const target = document.getElementById("target");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            console.log(entry);
+            if (entry.isIntersecting) {
+              target.classList.add("in-view");
+              target.textContent = "已进入可视区！";
+              console.log("进入可视区", entry);
+            }
+
+            //   else {
+            //     target.classList.remove('in-view');
+            //     target.textContent = '观察目标元素';
+            //     console.log('离开可视区', entry);
+            //   }
+          });
+        },
+        {
+          root: null, // 视口
+          rootMargin: "0px",
+          threshold: [0.6], // 部分、超过一半、全部可见时均会触发
+        }
+      );
+      observer.observe(target);
+    </script>
+  </body>
+</html>

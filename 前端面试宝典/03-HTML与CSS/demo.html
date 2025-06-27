@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>相对定位演示</title>
+    <style>
+        .box {
+            width: 100px;
+            height: 100px;
+            line-height: 100px;
+            text-align: center;
+            color: white;
+        }
+
+        .normal {
+            background-color: #666;
+        }
+
+        .relative {
+            background-color: #ff6b6b;
+            position: relative;
+            top: 20px;
+            left: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box normal">正常位置</div>
+    <div class="box relative">相对定位（视觉移动）</div>
+    <div class="box normal">后续元素</div>
+</body>
+</html>

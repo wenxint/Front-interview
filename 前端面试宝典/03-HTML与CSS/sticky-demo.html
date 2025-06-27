@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>粘性定位演示</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            line-height: 1.8;
+        }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin: 20px 0;
+            z-index: 100;
+        }
+        .content {
+            height: 1500px; /* 长内容用于滚动 */
+            padding: 20px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="sticky-header">第一章：基础概念</h2>
+        <div class="content">
+            <p>这里是第一章的长文本内容...<br>滚动查看粘性效果！<br>...</p>
+        </div>
+
+        <h2 class="sticky-header">第二章：进阶应用</h2>
+        <div class="content">
+            <p>这里是第二章的长文本内容...<br>滚动查看粘性效果！<br>...</p>
+        </div>
+    </div>
+</body>
+</html>
