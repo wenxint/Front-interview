@@ -1954,3 +1954,32 @@ const unsortedArray = [34, 12, 45, 6, 89, 23];
 console.log("排序前的数组:", unsortedArray);
 const sortedArray = heapSort(unsortedArray);
 console.log("排序后的数组:", sortedArray);
+
+
+/**
+ * 创建一个只能执行一次的函数
+ * @param {Function} func - 需要包装的原始函数
+ * @returns {Function} - 一个新的函数，该函数只会执行一次传入的原始函数
+ */
+function once (func) {
+  // 用于标记函数是否已经执行过
+  let done;
+  return function () {
+    // 若函数尚未执行过，则执行原始函数
+    if (!done) {
+      // 调用原始函数并传入当前参数
+      func.apply(null, arguments)
+      // 标记函数已执行
+      done = true
+    }
+  }
+}
+
+// 使用 once 函数创建一个只能执行一次的函数
+const onlyDoOne = once(function() {
+  console.log('1')
+})
+
+onlyDoOne() // 1
+// 第二次调用，由于函数已经执行过，不会有输出
+onlyDoOne() // 没有输出，不会再次执行

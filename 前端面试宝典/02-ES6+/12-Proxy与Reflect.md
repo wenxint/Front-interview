@@ -811,3 +811,58 @@ setTimeout(() => {
 - Vue 3使用Proxy，可以拦截任何属性操作，包括新增和删除
 - Proxy支持数组的直接索引操作和length属性变化
 - Proxy的性能在大多数场景下优于Object.defineProperty
+
+### Proxy.revocable
+
+#### 概念
+`Proxy.revocable()` 方法用于创建一个可撤销的代理对象。与普通Proxy不同，可撤销代理可以通过调用撤销函数来终止代理对象与目标对象的关联，之后任何对代理对象的操作都会抛出TypeError。
+
+#### 基本语法
+```javascript
+const { proxy, revoke } = Proxy.revocable(target, handler);
+```
+
+- `target`: 要代理的目标对象
+- `handler`: 定义拦截行为的对象
+- 返回值: 一个包含两个属性的对象
+  - `proxy`: 创建的代理对象
+  - `revoke`: 用于撤销代理的函数
+
+#### 使用示例
+```javascript
+const target = { name: '张三', age: 30 };
+const handler = {
+  get(target, prop) {
+    return target[prop];
+  },
+  set(target, prop, value) {
+    target[prop] = value;
+    return true;
+  }
+};
+
+// 创建可撤销代理
+const { proxy, revoke } = Proxy.revocable(target, handler);
+
+console.log(proxy.name); // 输出: 张三
+proxy.age = 31;
+console.log(proxy.age); // 输出: 31
+
+// 撤销代理
+revoke();
+
+// 撤销后再访问代理会抛出错误
+console.log(proxy.name); // TypeError: Cannot perform 'get' on a proxy that has been revoked
+proxy.age = 32; // TypeError: Cannot perform 'set' on a proxy that has been revoked
+```
+
+#### 应用场景
+1. **临时访问控制**：当需要临时授权访问某个对象，使用完毕后可立即撤销访问权限
+2. **安全敏感操作**：对于涉及敏感数据的操作，确保在完成后能够彻底终止访问
+3. **资源释放**：在不需要代理时主动释放资源，有助于垃圾回收
+4. **单次使用的代理**：确保代理对象只被使用一次，防止重复使用
+
+#### 注意事项
+- 撤销操作是不可逆的，一旦调用revoke()，代理对象将永久失效
+- 撤销后无法恢复代理功能，必须重新创建新的代理对象
+- 可撤销代理与普通代理具有相同的拦截能力，区别仅在于可撤销性
