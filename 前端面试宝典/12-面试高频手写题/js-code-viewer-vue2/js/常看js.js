@@ -130,23 +130,23 @@ mySetInterval(() => console.log("Hello, world!"), 1000);
 
 function lengthOfLongestSubstring(s) {
   // 1. 初始化数据结构
-  const charIndex = new Map();  // 哈希表：记录字符最后出现位置
-  let left = 0;                 // 窗口左边界
-  let maxLength = 0;            // 记录找到的最大长度
+  const charIndex = new Map(); // 哈希表：记录字符最后出现位置
+  let left = 0; // 窗口左边界
+  let maxLength = 0; // 记录找到的最大长度
 
   // 2. 遍历字符串，右边界不断向右移动
   for (let right = 0; right < s.length; right++) {
-      const char = s[right];    // 当前处理的字符
+    const char = s[right]; // 当前处理的字符
 
-      // 3. 检查是否出现重复字符
-      if (charIndex.has(char) && charIndex.get(char) >= left) {
-          // 重复了！需要移动左边界
-          left = charIndex.get(char) + 1;
-      }
+    // 3. 检查是否出现重复字符
+    if (charIndex.has(char) && charIndex.get(char) >= left) {
+      // 重复了！需要移动左边界
+      left = charIndex.get(char) + 1;
+    }
 
-      // 4. 更新字符位置和最大长度
-      charIndex.set(char, right);                    // 记录当前字符位置
-      maxLength = Math.max(maxLength, right - left + 1);  // 更新最大长度
+    // 4. 更新字符位置和最大长度
+    charIndex.set(char, right); // 记录当前字符位置
+    maxLength = Math.max(maxLength, right - left + 1); // 更新最大长度
   }
 
   return maxLength;
@@ -196,10 +196,6 @@ var f = function (s) {
     return x.slice(1).toUpperCase();
   });
 };
-
-
-
-
 
 // 手写new
 function myNew(constructor, ...args) {
@@ -1689,7 +1685,6 @@ function isPalindrome(s) {
 console.log(isPalindrome("A man a plan a canal Panama")); // true
 console.log(isPalindrome("race a car")); // false
 
-
 /**
  * @description 二分查找算法
  * @param {number[]} arr - 已排序的输入数组（升序）
@@ -1955,31 +1950,103 @@ console.log("排序前的数组:", unsortedArray);
 const sortedArray = heapSort(unsortedArray);
 console.log("排序后的数组:", sortedArray);
 
-
 /**
  * 创建一个只能执行一次的函数
  * @param {Function} func - 需要包装的原始函数
  * @returns {Function} - 一个新的函数，该函数只会执行一次传入的原始函数
  */
-function once (func) {
+function once(func) {
   // 用于标记函数是否已经执行过
   let done;
   return function () {
     // 若函数尚未执行过，则执行原始函数
     if (!done) {
       // 调用原始函数并传入当前参数
-      func.apply(null, arguments)
+      func.apply(null, arguments);
       // 标记函数已执行
-      done = true
+      done = true;
     }
-  }
+  };
 }
 
 // 使用 once 函数创建一个只能执行一次的函数
-const onlyDoOne = once(function() {
-  console.log('1')
-})
+const onlyDoOne = once(function () {
+  console.log("1");
+});
 
-onlyDoOne() // 1
+onlyDoOne(); // 1
 // 第二次调用，由于函数已经执行过，不会有输出
-onlyDoOne() // 没有输出，不会再次执行
+onlyDoOne(); // 没有输出，不会再次执行
+
+/**
+ * 使用for循环删除数组指定位置元素
+ * @param {Array} arr - 原始数组
+ * @param {number} index - 要删除的元素索引
+ * @return {Array} 修改后的数组
+ */
+function deleteElementByLoop(arr, index) {
+  // 边界检查
+  if (index < 0 || index >= arr.length) {
+    console.warn("索引超出数组范围");
+    return [...arr]; // 返回原数组副本
+  }
+
+  // 创建新数组，长度-1
+  const newArr = new Array(arr.length - 1);
+
+  // 1. 复制删除位置之前的元素
+  for (let i = 0; i < index; i++) {
+    newArr[i] = arr[i];
+  }
+
+  // 2. 复制删除位置之后的元素（原数组元素向前移动一位）
+  for (let i = index + 1; i < arr.length; i++) {
+    newArr[i - 1] = arr[i];
+  }
+
+  return newArr;
+}
+
+// 使用示例
+const originalArr2 = [1, 2, 3, 4, 5];
+const newArr2 = deleteElementByLoop(originalArr2, 2);
+console.log(newArr2); // [1, 2, 4, 5]
+console.log(originalArr2); // [1, 2, 3, 4, 5]（原数组不变）
+
+/**
+ * 使用for循环在数组指定位置插入元素
+ * @param {Array} arr - 原始数组
+ * @param {number} index - 插入位置索引
+ * @param {*} element - 要插入的元素
+ * @return {Array} 修改后的数组
+ */
+function insertElementByLoop(arr, index, element) {
+  // 边界检查：如果索引超出范围，默认插入到末尾
+  if (index < 0 || index > arr.length) {
+    index = arr.length;
+  }
+
+  // 创建新数组，长度+1
+  const newArr = new Array(arr.length + 1);
+
+  // 1. 复制插入位置之前的元素
+  for (let i = 0; i < index; i++) {
+    newArr[i] = arr[i];
+  }
+
+  // 2. 插入新元素
+  newArr[index] = element;
+
+  // 3. 复制插入位置之后的元素（原数组元素向后移动一位）
+  for (let i = index; i < arr.length; i++) {
+    newArr[i + 1] = arr[i];
+  }
+
+  return newArr;
+}
+
+// 使用示例
+const originalArr = [1, 2, 3, 4];
+const newArr = insertElementByLoop(originalArr, 2, "插入元素");
+console.log(newArr); // [1, 2, '插入元素', 3, 4]
+console.log(originalArr); // [1, 2, 3, 4]（原数组不变）

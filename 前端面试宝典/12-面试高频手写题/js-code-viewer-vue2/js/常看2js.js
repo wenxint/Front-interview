@@ -124,4 +124,56 @@ function buildTree(flatArr, rootParentId = 0) {
   return buildChildren(rootParentId);
 }
 
-// 使用示例
+
+function abMerge(a, b) {
+  if (a[1] >= b[0]) {
+    return [Math.min(a[0], b[0]), Math.max(a[1], b[1])];
+  }
+  return null; // 不能合并时返回null
+}
+
+function isMerge(a, b) {
+  if (!b) return false; // 处理undefined情况
+  return a[1] >= b[0];
+}
+
+function merge(arr) {
+  if (arr.length <= 1) return arr;
+
+  const sortArr = arr.sort((a, b) => a[0] - b[0]);
+  let pre = sortArr[0];
+  let res = [];
+
+  for (let i = 0; i < sortArr.length - 1; i++) {
+    // 注意边界
+    const next = sortArr[i + 1]; // 使用sortArr而不是arr
+
+    if (isMerge(pre, next)) {
+      pre = abMerge(pre, next);
+    } else {
+      res.push(pre);
+      pre = next;
+    }
+  }
+
+  // 关键：添加最后一个区间
+  res.push(pre);
+
+  return res;
+}
+
+// 测试
+console.log(
+  merge([
+    [1, 4],
+    [4, 5],
+  ])
+); // [[1,5]]
+console.log(
+  merge([
+    [1, 3],
+    [2, 6],
+    [8, 10],
+    [15, 18],
+  ])
+); // [[1,6],[8,10],[15,18]]
