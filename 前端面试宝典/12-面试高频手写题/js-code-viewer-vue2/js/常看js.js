@@ -2050,3 +2050,72 @@ const originalArr = [1, 2, 3, 4];
 const newArr = insertElementByLoop(originalArr, 2, "插入元素");
 console.log(newArr); // [1, 2, '插入元素', 3, 4]
 console.log(originalArr); // [1, 2, 3, 4]（原数组不变）
+
+/**
+ * 创建一个n×n的二维数组，所有元素初始化为0
+ * 这通常用于矩阵旋转、图像处理等算法中作为结果数组
+ * @description 先创建长度为n的一维数组，每个位置再填充长度为n且值为0的数组
+ */
+// 创建一个n×n的二维数组，所有元素初始化为0
+// Array(n).fill() 创建长度为n的数组，每个元素为undefined
+// map(() => Array(n).fill(0)) 将每个undefined替换为长度为n、值为0的数组
+const rotated = Array(n).fill().map(() => Array(n).fill(0));
+
+/**
+ * 检测对象是否存在循环引用
+ * @param {Object} obj - 要检测的对象
+ * @return {boolean} 如果存在循环引用返回true，否则返回false
+ * @description 使用WeakSet记录已访问的对象，通过深度优先遍历检测循环引用
+ */
+function hasCircularReference(obj) {
+  const visited = new WeakSet(); // 存储已访问的对象，使用WeakSet避免内存泄漏
+
+  /**
+   * 内部递归函数，执行实际的循环引用检测
+   * @param {*} obj - 当前检测的对象
+   * @return {boolean} 是否存在循环引用
+   */
+  function detect(obj) {
+    // 基本类型或 null/undefined 直接返回 false
+    // 只有对象类型才可能存在循环引用
+    if (obj === null || typeof obj !== 'object') {
+      return false;
+    }
+
+    // 如果对象已被访问过，说明存在循环引用
+    // 这是检测循环引用的核心逻辑
+    if (visited.has(obj)) {
+      return true;
+    }
+
+    // 标记当前对象为已访问
+    // 在递归前添加到WeakSet中
+    visited.add(obj);
+
+    // 递归检查所有属性
+    // 遍历对象的所有可枚举属性
+    for (const key in obj) {
+      // 只检查对象自身的属性，不包括原型链上的属性
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        // 递归检查属性值，如果发现循环引用立即返回true
+        if (detect(obj[key])) {
+          return true;
+        }
+      }
+    }
+
+    // 所有属性检查完毕，没有发现循环引用
+    return false;
+  }
+
+  // 启动检测过程
+  return detect(obj);
+}
+
+// 测试用例
+const objA = {}; // 创建空对象A
+const objB = { ref: objA }; // 创建对象B，包含对A的引用
+objA.ref = objB; // 给A添加对B的引用，形成循环：A -> B -> A
+
+console.log(hasCircularReference(objA)); // true - 存在循环引用
+console.log(hasCircularReference({ a: 1 })); // false - 普通对象，无循环引用
