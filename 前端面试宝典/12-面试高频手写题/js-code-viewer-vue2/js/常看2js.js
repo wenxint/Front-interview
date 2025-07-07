@@ -177,7 +177,6 @@ console.log(
   ])
 ); // [[1,6],[8,10],[15,18]]
 
-
 //如何快速找到数组中长度最长的字符串？​
 const arr = ["bab", "aba"];
 const longest = arr.reduce(
@@ -198,3 +197,58 @@ console.log(longest); // "bab" 或 "aba"（两者长度相同）
 const longest3 = arr.sort((a, b) => b.length - a.length)[0];
 
 console.log(longest); // "bab" 或 "aba"
+
+/**
+ * @description 缓存优化：使用闭包封装私有缓存
+
+ * @example
+ *
+ */
+// 1. 基础记忆化
+
+function memoize(fn) {
+  const cache = new Map();
+  return function (...args) {
+    const key = JSON.stringify(args);
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    const result = fn.apply(this, args);
+    cache.set(key, result);
+    return result;
+  };
+}
+
+// 2. 实际应用：斐波那契数列
+const fibonacci = memoize(function (n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+});
+
+const fibonacci2 = (function() {
+  // 私有缓存，外部无法直接访问
+  const cache = new Map(); // 或者用普通对象：{}
+
+  return function(n) {
+      // 如果缓存中已有结果，直接返回
+      if (cache.has(n)) {
+          return cache.get(n);
+      }
+
+      // 基本情况
+      if (n <= 1) {
+          const result = n;
+          cache.set(n, result); // 存入缓存
+          return result;
+      }
+
+      // 递归计算并缓存结果
+      const result = fibonacci2(n - 1) + fibonacci2(n - 2);
+      cache.set(n, result); // 存入缓存
+      return result;
+  };
+})();
+
+// 测试
+console.log(fibonacci2(10)); // 55
+// console.log(fibonacci.cache); // 报错，cache 是私有的，无法直接访问
