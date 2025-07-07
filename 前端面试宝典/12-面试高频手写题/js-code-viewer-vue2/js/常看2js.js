@@ -124,7 +124,6 @@ function buildTree(flatArr, rootParentId = 0) {
   return buildChildren(rootParentId);
 }
 
-
 function abMerge(a, b) {
   if (a[1] >= b[0]) {
     return [Math.min(a[0], b[0]), Math.max(a[1], b[1])];
@@ -177,3 +176,25 @@ console.log(
     [15, 18],
   ])
 ); // [[1,6],[8,10],[15,18]]
+
+
+//如何快速找到数组中长度最长的字符串？​
+const arr = ["bab", "aba"];
+const longest = arr.reduce(
+  (max, current) => (current.length > max.length ? current : max),
+  "" // 初始值（空字符串）
+);
+
+let longest2 = "";
+for (const str of arr) {
+  if (str.length > longest.length) {
+    longest = str;
+  }
+}
+
+console.log(longest); // "bab" 或 "aba"
+console.log(longest); // "bab" 或 "aba"（两者长度相同）
+
+const longest3 = arr.sort((a, b) => b.length - a.length)[0];
+
+console.log(longest); // "bab" 或 "aba"
