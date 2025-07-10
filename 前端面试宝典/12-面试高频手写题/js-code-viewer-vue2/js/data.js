@@ -1881,3 +1881,645 @@ console.log("排序后的数组:", sortedArray);`,
 
 // 合并到主数组
 window.CODE_DATA = [...window.CODE_DATA, ...additionalCodeData];
+
+// 新增代码块 - 从常看js.js搬运
+const newCodeBlocks = [
+  {
+    id: "promiseMyAll",
+    title: "Promise.MyAll方法",
+    description: "自定义实现Promise.all方法",
+    code: `/**
+ * @description Promise.MyAll方法的完整调用示例
+ * 展示如何使用自定义的MyAll方法处理多个Promise
+ */
+
+// 首先，让我们回顾一下MyAll的实现
+Promise.MyAll = function (promises) {
+  // 存储所有 Promise 的结果
+  let arr = [],
+    // 计数器,记录已完成的 Promise 数量
+    count = 0;
+
+  // 返回一个新的 Promise
+  return new Promise((resolve, reject) => {
+    // 处理空数组的情况
+    if (promises.length === 0) {
+      resolve([]);
+      return;
+    }
+
+    // 遍历传入的 promises 数组
+    promises.forEach((item, i) => {
+      // 将每个项转为 Promise 对象并执行
+      Promise.resolve(item).then(
+        (res) => {
+          // 按照原始顺序存储结果
+          arr[i] = res;
+          // 完成计数加1
+          count += 1;
+          // 当所有 Promise 都完成时,返回结果数组
+          if (count === promises.length) resolve(arr);
+        },
+        // 任何一个 Promise 失败时直接 reject
+        reject
+      );
+    });
+  });
+};
+
+// ==================== 调用示例 ====================
+
+/**
+ * 示例1: 处理全部成功的Promise
+ */
+console.log("\\n===== 示例1: 全部成功的Promise =====");
+
+// 创建多种类型的Promise
+const promise1 = Promise.resolve(1); // 立即解决的Promise
+const promise2 = new Promise((resolve) => setTimeout(() => resolve(2), 1000)); // 延迟解决的Promise
+const promise3 = 3; // 非Promise值(会被自动转换为Promise)
+const promise4 = new Promise((resolve) => setTimeout(() => resolve(4), 500)); // 另一个延迟解决的Promise
+
+// 使用自定义的MyAll方法
+console.log("开始执行MyAll...");
+const startTimeMyAll = Date.now();
+
+Promise.MyAll([promise1, promise2, promise3, promise4])
+  .then((results) => {
+    const endTimeMyAll = Date.now();
+    console.log("MyAll结果:", results);
+    console.log("MyAll执行时间:", endTimeMyAll - startTimeMyAll, "ms");
+    console.log("MyAll结果类型:", Object.prototype.toString.call(results));
+    console.log(
+      "MyAll保持了原始顺序，即使promise2(1000ms)比promise4(500ms)晚完成"
+    );
+  })
+  .catch((error) => {
+    console.error("MyAll错误:", error);
+  });`,
+  },
+  {
+    id: "maskPhone",
+    title: "敏感信息脱敏",
+    description: "手机号脱敏处理",
+    code: `//敏感信息脱敏（replace）
+function maskPhone(phone) {
+  return phone.replace(/(\\d{3})\\d{4}(\\d{4})/, "$1****$2");
+}
+console.log(maskPhone("13812345678")); // 输出: '138****5678'`,
+  },
+  {
+    id: "parseUrlParams",
+    title: "URL参数解析",
+    description: "解析URL查询参数",
+    code: `//URL参数解析（matchAll 或 replace）
+function parseQueryString(url) {
+  const queryString = url.split("?")[1];
+  if (!queryString) return {};
+
+  const params = {};
+  // 使用 matchAll
+  // const paramRegex = /([^&=]+)=([^&]*)/g;
+  // for (const match of queryString.matchAll(paramRegex)) {
+  //   params[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
+  // }
+
+  // 或者使用 replace 的函数回调
+  queryString.replace(/([^&=]+)=([^&]*)/g, (match, key, value) => {
+    params[decodeURIComponent(key)] = decodeURIComponent(value);
+    return ""; // 返回空字符串，因为我们只关心副作用（填充params对象）
+  });
+
+  return params;
+}
+
+console.log(
+  parseQueryString("https://example.com?name=Alice&age=30&city=New%20York")
+);
+// 输出: { name: 'Alice', age: '30', city: 'New York' }
+
+function parseUrlParams(url) {
+  const params = {};
+  // 提取查询部分（? 后的内容）
+  const queryString = url.split("?")[1] || "";
+  // 分割键值对（处理 # 后的哈希，避免干扰）
+  const pairs = queryString.split("#")[0].split("&");
+
+  for (const pair of pairs) {
+    if (!pair) continue; // 跳过空字符串（如 URL 末尾的 &）
+    let [key, value] = pair.split("=");
+    // 处理无值的参数（如 key 或 key=）
+    value = value === undefined ? "" : value;
+    // 解码 URI 编码（处理中文、特殊符号）
+    key = decodeURIComponent(key.replace(/\\+/g, " ")); // 替换 + 为空格（表单提交习惯）
+    value = decodeURIComponent(value.replace(/\\+/g, " "));
+    // 多个相同键的情况（如 ?a=1&a=2），存储为数组
+    if (params.hasOwnProperty(key)) {
+      params[key] = [].concat(params[key], value);
+    } else {
+      params[key] = value;
+    }
+  }
+  return params;
+}
+
+// 当前页面 URL（或任意 URL 字符串）
+const url = new URL(
+  "https://example.com/page?name=%E5%B0%8F%E6%98%8E&age=20&hobby=reading&hobby=music"
+);
+
+// 1. 直接获取参数对象（需手动处理多值）
+const params = Object.fromEntries(url.searchParams.entries());
+console.log(params);
+// 输出：{ name: '小明', age: '20', hobby: 'reading' }（注意：hobby 只取第一个）
+
+// 2. 获取单个参数（推荐）
+const name = url.searchParams.get("name"); // '小明'
+const age = url.searchParams.get("age"); // '20'
+
+// 3. 获取多个值（如 hobby）
+const hobbies = url.searchParams.getAll("hobby"); // ['reading', 'music']
+
+// 4. 检查参数是否存在
+const hasHobby = url.searchParams.has("hobby"); // true
+
+// 5. 处理无值的参数（如 ?key）
+const isEmpty = url.searchParams.get("key"); // null（若参数存在但无值，返回空字符串）`,
+  },
+  {
+    id: "functionComposition",
+    title: "函数组合和管道",
+    description: "函数组合和管道操作",
+    code: `// 函数组合（composition）是将多个函数组合成一个函数的技术，数据从右向左流动。管道（pipeline）类似，但方向相反，数据从左向右流动。
+
+// 定义基本函数：给输入值加 10
+const add10 = (x) => x + 10;
+// 定义基本函数：将输入值乘以 2
+const multiply2 = (x) => x * 2;
+// 定义基本函数：从输入值中减去 5
+const subtract5 = (x) => x - 5;
+
+// 实现函数组合（从右到左执行函数）
+// ...fns 是一个剩余参数，接收多个函数作为参数
+// 返回一个新函数，该函数接收一个初始值 x
+// 使用 reduceRight 方法从右向左依次执行传入的函数
+const compose =
+  (...fns) =>
+  (x) =>
+    fns.reduceRight((acc, fn) => fn(acc), x);
+// 使用 compose 函数组合 subtract5、multiply2 和 add10 三个函数
+const computeWithCompose = compose(subtract5, multiply2, add10);
+// 计算 subtract5(multiply2(add10(5))) 的结果并打印
+console.log(computeWithCompose(5)); // 25
+
+// 实现管道（从左到右执行函数）
+// ...fns 是一个剩余参数，接收多个函数作为参数
+// 返回一个新函数，该函数接收一个初始值 x
+// 使用 reduce 方法从左向右依次执行传入的函数
+const pipe =
+  (...fns) =>
+  (x) =>
+    fns.reduce((acc, fn) => fn(acc), x);
+// 使用 pipe 函数组合 add10、multiply2 和 subtract5 三个函数
+const computeWithPipe = pipe(add10, multiply2, subtract5);
+// 计算 subtract5(multiply2(add10(5))) 的结果并打印
+console.log(computeWithPipe(5)); // 25`,
+  },
+  {
+    id: "tailCallOptimization",
+    title: "尾调用优化",
+    description: "尾调用优化示例",
+    code: `//尾调用优化
+//尾调用优化（Tail Call Optimization，TCO）是一种 JavaScript 引擎优化技术，用于减少函数调用栈的深度，从而提高性能。
+//当一个函数的执行完成后，其返回值将直接作为另一个函数的参数，而不需要额外的函数调用栈帧。
+//尾调用优化使得函数可以在调用栈的底部执行，而不需要额外的栈帧，从而避免了栈溢出的风险。
+//尾调用优化的实现依赖于 JavaScript 引擎，而不是 JavaScript 语言本身。
+//在现代 JavaScript 引擎中，如 V8 引擎，已经实现了尾调用优化。
+//然而，并非所有的函数都可以进行尾调用优化。只有在函数的最后一行调用另一个函数，并且不使用该函数的返回值时，才可以进行尾调用优化。
+
+function factorial(num) {
+  if (num === 1) return 1;
+  return num * factorial(num - 1);
+}
+
+function factorial(num, total = 1) {
+  if (num === 1) return total;
+  return factorial(num - 1, num * total);
+}
+
+factorial(5); // 120
+factorial(10); // 3628800`,
+  },
+
+  {
+    id: "heapSortComplete",
+    title: "堆排序完整版",
+    description: "堆排序算法完整实现",
+    code: `/**
+ * 堆排序
+ *
+ * 核心思想：
+ * 1. 建堆：将无序数组构造成最大堆，最大堆的特点是每个节点的值都大于或等于其子节点的值。
+ * 2. 排序：反复提取堆顶（即数组的第一个元素）的最大元素，将其放到数组的末尾。
+ * 3. 调整：每次提取堆顶元素后，重新调整堆结构，使其继续保持最大堆的性质。
+ *
+ * @param {Array} arr 待排序数组，数组中的元素应为可比较大小的类型，如数字或字符串。
+ * @returns {Array} 排序后的数组，原数组会被直接修改，返回的是排序后的原数组引用。
+ * @time O(n log n) 所有情况，无论数组初始状态如何，堆排序的时间复杂度都是 O(n log n)。
+ * @space O(1) 原地排序，只需要常数级的额外空间，不需要额外的数组来存储排序结果。
+ */
+function heapSort(arr) {
+  // 获取数组的长度，后续建堆和排序过程会用到这个长度信息。
+  const n = arr.length;
+
+  // 建堆阶段：从最后一个非叶子节点开始，逐步向上调整每个节点，构建最大堆。
+  // 最后一个非叶子节点的索引为 Math.floor(n / 2) - 1，因为叶子节点不需要调整。
+  // 从这个节点开始，依次对每个非叶子节点调用 heapify 函数进行调整。
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+    // 调用 heapify 函数，对以索引 i 为根节点的子树进行调整，使其满足最大堆的性质。
+    heapify(arr, n, i);
+  }
+
+  // 排序阶段：反复提取堆顶元素（即数组的第一个元素，它是当前堆中的最大值），并将其放到数组的末尾。
+  // 每提取一次堆顶元素，堆的大小就减 1，直到堆中只剩下一个元素。
+  for (let i = n - 1; i > 0; i--) {
+    // 调用 swap 函数，将堆顶元素（索引为 0）和当前未排序部分的最后一个元素（索引为 i）交换位置。
+    // 这样，当前的最大值就被放到了数组的末尾，成为已排序部分的一部分。
+    swap(arr, 0, i);
+    // 交换后，堆的结构可能被破坏，需要重新调整堆。
+    // 此时，堆的大小变为 i，因为最后一个元素已经是排序好的，不需要再参与堆的调整。
+    // 从根节点（索引为 0）开始调用 heapify 函数，重新构建最大堆。
+    heapify(arr, i, 0);
+  }
+
+  // 返回排序后的数组，由于排序过程是在原数组上进行的，所以返回的是原数组的引用。
+  return arr;
+}
+
+/**
+ * 堆调整函数，用于将以索引 i 为根节点的子树调整为最大堆。
+ * @param {Array} arr 数组，包含待调整的元素。
+ * @param {number} n 堆的大小，即当前参与堆调整的元素个数。
+ * @param {number} i 要调整的节点索引，从该节点开始向下调整，使其满足最大堆的性质。
+ */
+function heapify(arr, n, i) {
+  // 假设当前节点（索引为 i）是父节点和其子节点中的最大值。
+  let largest = i;
+  // 计算当前节点的左子节点的索引，在完全二叉树中，左子节点的索引为 2 * i + 1。
+  const left = 2 * i + 1;
+  // 计算当前节点的右子节点的索引，在完全二叉树中，右子节点的索引为 2 * i + 2。
+  const right = 2 * i + 2;
+
+  // 检查左子节点是否存在（即左子节点的索引小于堆的大小），并且左子节点的值是否大于当前假设的最大值节点的值。
+  // 如果满足条件，则更新最大值节点的索引为左子节点的索引。
+  if (left < n && arr[left] > arr[largest]) {
+    largest = left;
+  }
+
+  // 检查右子节点是否存在（即右子节点的索引小于堆的大小），并且右子节点的值是否大于当前假设的最大值节点的值。
+  // 如果满足条件，则更新最大值节点的索引为右子节点的索引。
+  if (right < n && arr[right] > arr[largest]) {
+    largest = right;
+  }
+
+  // 如果最大值节点的索引不等于当前节点的索引，说明当前节点不是父节点和其子节点中的最大值。
+  // 此时需要交换当前节点和最大值节点的值，并递归调用 heapify 函数，继续调整以最大值节点为根的子树。
+  if (largest !== i) {
+    // 调用 swap 函数，交换当前节点（索引为 i）和最大值节点（索引为 largest）的值。
+    swap(arr, i, largest);
+    // 递归调用 heapify 函数，对以最大值节点（索引为 largest）为根的子树进行调整，确保其满足最大堆的性质。
+    heapify(arr, n, largest);
+  }
+}
+
+/**
+ * 交换数组中两个元素的位置
+ * @param {Array} arr 数组
+ * @param {number} i 第一个元素的索引
+ * @param {number} j 第二个元素的索引
+ */
+function swap(arr, i, j) {
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+}
+
+// 调用案例
+const unsortedArray = [34, 12, 45, 6, 89, 23];
+console.log("排序前的数组:", unsortedArray);
+const sortedArray = heapSort(unsortedArray);
+console.log("排序后的数组:", sortedArray);`,
+  },
+  {
+    id: "onceFunction",
+    title: "once函数",
+    description: "创建只能执行一次的函数",
+    code: `/**
+ * 创建一个只能执行一次的函数
+ * @param {Function} func - 需要包装的原始函数
+ * @returns {Function} - 一个新的函数，该函数只会执行一次传入的原始函数
+ */
+function once(func) {
+  // 用于标记函数是否已经执行过
+  let done;
+  return function () {
+    // 若函数尚未执行过，则执行原始函数
+    if (!done) {
+      // 调用原始函数并传入当前参数
+      func.apply(null, arguments);
+      // 标记函数已执行
+      done = true;
+    }
+  };
+}
+
+// 使用 once 函数创建一个只能执行一次的函数
+const onlyDoOne = once(function () {
+  console.log("1");
+});
+
+onlyDoOne(); // 1
+// 第二次调用，由于函数已经执行过，不会有输出
+onlyDoOne(); // 没有输出，不会再次执行`,
+  },
+  {
+    id: "arrayElementOperations",
+    title: "数组元素操作",
+    description: "数组元素删除和插入操作",
+    code: `/**
+ * 使用for循环删除数组指定位置元素
+ * @param {Array} arr - 原始数组
+ * @param {number} index - 要删除的元素索引
+ * @return {Array} 修改后的数组
+ */
+function deleteElementByLoop(arr, index) {
+  // 边界检查
+  if (index < 0 || index >= arr.length) {
+    console.warn("索引超出数组范围");
+    return [...arr]; // 返回原数组副本
+  }
+
+  // 创建新数组，长度-1
+  const newArr = new Array(arr.length - 1);
+
+  // 1. 复制删除位置之前的元素
+  for (let i = 0; i < index; i++) {
+    newArr[i] = arr[i];
+  }
+
+  // 2. 复制删除位置之后的元素（原数组元素向前移动一位）
+  for (let i = index + 1; i < arr.length; i++) {
+    newArr[i - 1] = arr[i];
+  }
+
+  return newArr;
+}
+
+// 使用示例
+const originalArr2 = [1, 2, 3, 4, 5];
+const newArr2 = deleteElementByLoop(originalArr2, 2);
+console.log(newArr2); // [1, 2, 4, 5]
+console.log(originalArr2); // [1, 2, 3, 4, 5]（原数组不变）
+
+/**
+ * 使用for循环在数组指定位置插入元素
+ * @param {Array} arr - 原始数组
+ * @param {number} index - 插入位置索引
+ * @param {*} element - 要插入的元素
+ * @return {Array} 修改后的数组
+ */
+function insertElementByLoop(arr, index, element) {
+  // 边界检查：如果索引超出范围，默认插入到末尾
+  if (index < 0 || index > arr.length) {
+    index = arr.length;
+  }
+
+  // 创建新数组，长度+1
+  const newArr = new Array(arr.length + 1);
+
+  // 1. 复制插入位置之前的元素
+  for (let i = 0; i < index; i++) {
+    newArr[i] = arr[i];
+  }
+
+  // 2. 插入新元素
+  newArr[index] = element;
+
+  // 3. 复制插入位置之后的元素（原数组元素向后移动一位）
+  for (let i = index; i < arr.length; i++) {
+    newArr[i + 1] = arr[i];
+  }
+
+  return newArr;
+}
+
+// 使用示例
+const originalArr = [1, 2, 3, 4];
+const newArr = insertElementByLoop(originalArr, 2, "插入元素");
+console.log(newArr); // [1, 2, '插入元素', 3, 4]
+console.log(originalArr); // [1, 2, 3, 4]（原数组不变）`,
+  },
+  {
+    id: "create2DArray",
+    title: "二维数组创建",
+    description: "创建二维数组",
+    code: `/**
+ * 创建一个n×n的二维数组，所有元素初始化为0
+ * 这通常用于矩阵旋转、图像处理等算法中作为结果数组
+ * @description 先创建长度为n的一维数组，每个位置再填充长度为n且值为0的数组
+ */
+// 创建一个n×n的二维数组，所有元素初始化为0
+// Array(n).fill() 创建长度为n的数组，每个元素为undefined
+// map(() => Array(n).fill(0)) 将每个undefined替换为长度为n、值为0的数组
+const rotated = Array(n).fill().map(() => Array(n).fill(0));`,
+  },
+  {
+    id: "circularReferenceDetection",
+    title: "循环引用检测",
+    description: "检测对象是否存在循环引用",
+    code: `/**
+ * 检测对象是否存在循环引用
+ * @param {Object} obj - 要检测的对象
+ * @return {boolean} 如果存在循环引用返回true，否则返回false
+ * @description 使用WeakSet记录已访问的对象，通过深度优先遍历检测循环引用
+ */
+function hasCircularReference(obj) {
+  const visited = new WeakSet(); // 存储已访问的对象，使用WeakSet避免内存泄漏
+
+  /**
+   * 内部递归函数，执行实际的循环引用检测
+   * @param {*} obj - 当前检测的对象
+   * @return {boolean} 是否存在循环引用
+   */
+  function detect(obj) {
+    // 基本类型或 null/undefined 直接返回 false
+    // 只有对象类型才可能存在循环引用
+    if (obj === null || typeof obj !== 'object') {
+      return false;
+    }
+
+    // 如果对象已被访问过，说明存在循环引用
+    // 这是检测循环引用的核心逻辑
+    if (visited.has(obj)) {
+      return true;
+    }
+
+    // 标记当前对象为已访问
+    // 在递归前添加到WeakSet中
+    visited.add(obj);
+
+    // 递归检查所有属性
+    // 遍历对象的所有可枚举属性
+    for (const key in obj) {
+      // 只检查对象自身的属性，不包括原型链上的属性
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        // 递归检查属性值，如果发现循环引用立即返回true
+        if (detect(obj[key])) {
+          return true;
+        }
+      }
+    }
+
+    // 所有属性检查完毕，没有发现循环引用
+    return false;
+  }
+
+  // 启动检测过程
+  return detect(obj);
+}
+
+// 测试用例
+const objA = {}; // 创建空对象A
+const objB = { ref: objA }; // 创建对象B，包含对A的引用
+objA.ref = objB; // 给A添加对B的引用，形成循环：A -> B -> A
+
+console.log(hasCircularReference(objA)); // true - 存在循环引用
+console.log(hasCircularReference({ a: 1 })); // false - 普通对象，无循环引用`,
+  },
+  {
+    id: "camelCaseConversion",
+    title: "驼峰命名转换",
+    description: "字符串驼峰命名转换",
+    code: `/**
+ * @description 将下划线命名的字符串转换为驼峰命名法。此实现存在问题，本意是将匹配到的小写字母转为大写，但代码中使用了 toLowerCase，导致未实现驼峰转换。
+ * @param {string} str - 需要转换的下划线命名的字符串
+ * @returns {string} 转换后的驼峰命名法字符串
+ */
+function getCamelCase(str) {
+  // 使用正则表达式匹配下划线后跟一个小写字母的模式，并尝试替换
+  return str.replace(/_([a-z])/g, function (all, i) {
+    // 此处应使用 toUpperCase 来实现驼峰转换，当前代码有误
+    return i.toLowerCase();
+  });
+}
+
+/**
+ * @description 将下划线命名的字符串转换为驼峰命名法。
+ * @param {string} str - 需要转换的下划线命名的字符串
+ * @returns {string} 转换后的驼峰命名法字符串
+ */
+function getCamelCase(str) {
+  // 将输入的字符串按下划线分割成数组
+  let arr = str.split("_");
+  // 遍历数组，将除第一个元素外的每个元素的首字母转换为大写
+  return arr
+    .map((item, index) => {
+      if (index === 0) {
+        // 第一个元素保持不变
+        return item;
+      } else {
+        // 注意：此处存在拼写错误，应为 charAt 而非 chartAt
+        return item.charAt(0).toUpperCase() + item.slice(1);
+      }
+    })
+    .join("");
+}`,
+  },
+  {
+    id: "dataBinding",
+    title: "数据劫持",
+    description: "使用Object.defineProperty实现数据劫持",
+    code: `// 定义一个空对象 tarobj，后续将对其进行数据劫持操作
+let tarobj = {};
+// 通过 id 获取输入框元素，后续用于监听输入事件和更新输入框的值
+let input = document.getElementById("input");
+// 通过 id 获取 span 元素，后续用于更新其显示的文本内容
+let span = document.getElementById("span");
+// 数据劫持：使用 Object.defineProperty 方法对 tarobj 对象的 'text' 属性进行劫持
+Object.defineProperty(tarobj, "text", {
+  // 表示该属性的描述符可以被修改，也可以被删除
+  configurable: true,
+  // 表示该属性可以在对象的属性枚举中出现
+  enumerable: true,
+  // 当访问 tarobj.text 时触发此方法，打印提示信息表明正在获取数据
+  get() {
+    console.log("获取数据了");
+  },
+  // 当给 tarobj.text 赋值时触发此方法，打印提示信息表明数据已更新，并更新输入框和 span 元素的内容
+  set(newVal) {
+    console.log("数据更新了");
+    input.value = newVal;
+    span.innerHTML = newVal;
+  },
+});
+// 输入监听：给输入框添加 keyup 事件监听器，当用户松开键盘按键时触发回调函数
+input.addEventListener("keyup", function (e) {
+  // 将输入框的值赋给 tarobj 的 text 属性，触发 set 方法更新相关元素内容
+  // 注意：此处原代码可能存在笔误，obj 应改为 tarobj
+  tarobj.text = e.target.value;
+});`,
+  },
+  {
+    id: "customMap",
+    title: "自定义map方法",
+    description: "手写Array.prototype.map方法",
+    code: `/**
+ * @description 自定义实现 Array.prototype.map 方法。该方法会创建一个新数组，其结果是该数组中的每个元素是调用一次提供的回调函数后的返回值。
+ * @param {Function} callback - 生成新数组元素的函数，该函数接收三个参数：
+ *   - currentValue：数组中正在处理的当前元素。
+ *   - index：数组中正在处理的当前元素的索引。
+ *   - array：调用 myMap 方法的数组。
+ * @param {any} [thisArg] - 可选参数，执行 callback 函数时使用的 this 值。
+ * @returns {Array} - 一个由原数组每个元素执行回调函数的结果组成的新数组。
+ */
+Array.prototype.myMap = function (callback, thisArg) {
+  // 1. 检查回调函数是否为函数类型
+  if (typeof callback !== "function") {
+    throw new TypeError(callback + " is not a function");
+  }
+
+  // 2. 获取数组和长度
+  const array = this;
+  const length = array.length;
+
+  // 3. 创建新数组用于存储结果
+  const result = new Array(length);
+
+  // 4. 遍历数组
+  for (let i = 0; i < length; i++) {
+    // 跳过稀疏数组的空位
+    if (i in array) {
+      // 调用回调函数，传入当前元素、索引、原数组
+      // 如果提供了 thisArg，则作为回调函数的 this 值
+      result[i] = callback.call(thisArg, array[i], i, array);
+    }
+  }
+
+  // 5. 返回新数组
+  return result;
+};`
+  },
+  {
+    id: "getRandomInt",
+    title: "生成随机整数",
+    description: "生成指定范围内的随机整数",
+    code: `//生成 [a, b] 之间的随机整数
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const randomNum = getRandomInt(1, 10);
+console.log(randomNum); // 可能是 1, 2, ..., 10`
+  }
+];
+
+// 将新代码块合并到主数组
+window.CODE_DATA = [...window.CODE_DATA, ...newCodeBlocks];
