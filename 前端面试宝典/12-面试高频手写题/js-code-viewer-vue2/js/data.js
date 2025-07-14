@@ -441,59 +441,7 @@ console.log(deepCopy.birthDate.getFullYear()); // 2000
  * 超简单版本：控制固定数量异步任务的并发执行
  * @param {number} limit - 最大并发数
  */
-function simpleLimit(limit) {
-  // 等待执行的任务队列
-  const queue = [];
-  // 当前正在执行的任务数量
-  let activeCount = 0;
 
-  // 执行队列中的下一个任务
-  const runNext = () => {
-    if (queue.length === 0) return;
-
-    // 如果正在执行的任务数量小于限制，则执行下一个任务
-    if (activeCount < limit) {
-      // 从队列中取出一个任务
-      const { fn, resolve, reject } = queue.shift();
-      activeCount++;
-
-      Promise.resolve(fn())
-        .then(resolve)
-        .catch(reject)
-        .finally(() => {
-          activeCount--;
-          runNext(); // 任务完成后，尝试执行下一个任务
-        });
-    }
-  };
-
-  // 返回一个函数，用于添加任务
-  return (fn) => {
-    return new Promise((resolve, reject) => {
-      queue.push({ fn, resolve, reject });
-      runNext();
-    });
-  };
-}
-
-// 使用示例
-const runTask = simpleLimit(2); // 最多同时执行2个任务
-
-// 创建5个模拟的异步任务
-const createTask = (id, delay) => () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(\`任务\${id}完成，耗时\${delay}ms\`);
-      resolve(\`任务\${id}的结果\`);
-    }, delay);
-  });
-};
-
-// 执行任务并获取结果
-runTask(createTask(1, 1000)).then((result) => console.log(result));
-runTask(createTask(2, 2000)).then((result) => console.log(result));
-runTask(createTask(3, 1500)).then((result) => console.log(result));
-runTask(createTask(4, 800)).then((result) => console.log(result));
 
   /**
    * 处理请求队列的异步函数，不断从队列中取出请求并执行，直到队列清空或达到最大并发数。
@@ -2518,6 +2466,122 @@ function getRandomInt(min, max) {
 
 const randomNum = getRandomInt(1, 10);
 console.log(randomNum); // 可能是 1, 2, ..., 10`
+  },
+  {
+    id: "arrayMoveSlice",
+    title: "数组移动-slice方法",
+    description: "使用slice方法实现数组移动",
+    code: `/**
+ * 数组向前移动K位 - slice方法
+ * @param {Array} arr - 原数组
+ * @param {number} k - 移动位数
+ * @returns {Array} - 移动后的新数组
+ */
+function moveForwardSlice(arr, k) {
+  if (k >= arr.length || k <= 0) {
+    throw new Error('K必须大于0且小于数组长度');
+  }
+
+  // 取从k位置开始到末尾的元素
+  const movedElements = arr.slice(k);
+
+  // 创建k个空字符串填充到末尾
+  const emptySpaces = new Array(k).fill('');
+
+  // 合并数组
+  return [...movedElements, ...emptySpaces];
+}
+
+/**
+ * 数组向后移动K位 - slice方法
+ * @param {Array} arr - 原数组
+ * @param {number} k - 移动位数
+ * @returns {Array} - 移动后的新数组
+ */
+function moveBackwardSlice(arr, k) {
+  if (k >= arr.length || k <= 0) {
+    throw new Error('K必须大于0且小于数组长度');
+  }
+
+  // 创建k个空字符串填充到开头
+  const emptySpaces = new Array(k).fill('');
+
+  // 取从开头到length-k位置的元素
+  const movedElements = arr.slice(0, arr.length - k);
+
+  // 合并数组
+  return [...emptySpaces, ...movedElements];
+}
+
+// 使用示例
+const arr1 = ['a', 'b', 'c', 'd', 'e'];
+console.log('原数组:', arr1);
+console.log('向前移动2位:', moveForwardSlice(arr1, 2));
+// 输出: ['c', 'd', 'e', '', '']
+
+const arr2 = ['a', 'b', 'c', 'd', 'e'];
+console.log('原数组:', arr2);
+console.log('向后移动2位:', moveBackwardSlice(arr2, 2));
+// 输出: ['', '', 'a', 'b', 'c']`
+  },
+  {
+    id: "arrayMoveIndex",
+    title: "数组移动-纯下标方法",
+    description: "使用纯下标操作实现数组移动",
+    code: `/**
+ * 数组向前移动K位 - 优化的纯下标方法
+ * @param {Array} arr - 原数组
+ * @param {number} k - 移动位数
+ * @returns {Array} - 移动后的新数组
+ */
+function moveForwardIndex(arr, k) {
+  if (k >= arr.length || k <= 0) {
+    throw new Error('K必须大于0且小于数组长度');
+  }
+
+  // 创建与原数组相同长度的新数组，全部填充为空字符串
+  const result = new Array(arr.length).fill('');
+
+  // 将原数组从k位置开始的元素移动到新数组的开头
+  for (let i = 0; i < arr.length - k; i++) {
+    result[i] = arr[i + k];
+  }
+
+  return result;
+}
+
+/**
+ * 数组向后移动K位 - 优化的纯下标方法
+ * @param {Array} arr - 原数组
+ * @param {number} k - 移动位数
+ * @returns {Array} - 移动后的新数组
+ */
+function moveBackwardIndex(arr, k) {
+  if (k >= arr.length || k <= 0) {
+    throw new Error('K必须大于0且小于数组长度');
+  }
+
+  // 创建与原数组相同长度的新数组，全部填充为空字符串
+  const result = new Array(arr.length).fill('');
+
+  // 将原数组的前length-k个元素移动到新数组的k位置之后
+  for (let i = 0; i < arr.length - k; i++) {
+    result[i + k] = arr[i];
+  }
+
+  return result;
+}
+
+// 使用示例
+const arr3 = ['a', 'b', 'c', 'd', 'e'];
+console.log('原数组:', arr3);
+console.log('向前移动2位:', moveForwardIndex(arr3, 2));
+// 输出: ['c', 'd', 'e', '', '']
+
+const arr4 = ['a', 'b', 'c', 'd', 'e'];
+console.log('原数组:', arr4);
+console.log('向后移动2位:', moveBackwardIndex(arr4, 2));
+// 输出: ['', '', 'a', 'b', 'c']`
   }
 ];
 
