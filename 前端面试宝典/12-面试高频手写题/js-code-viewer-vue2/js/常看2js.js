@@ -225,30 +225,65 @@ const fibonacci = memoize(function (n) {
   return fibonacci(n - 1) + fibonacci(n - 2);
 });
 
-const fibonacci2 = (function() {
+const fibonacci2 = (function () {
   // 私有缓存，外部无法直接访问
   const cache = new Map(); // 或者用普通对象：{}
 
-  return function(n) {
-      // 如果缓存中已有结果，直接返回
-      if (cache.has(n)) {
-          return cache.get(n);
-      }
+  return function (n) {
+    // 如果缓存中已有结果，直接返回
+    if (cache.has(n)) {
+      return cache.get(n);
+    }
 
-      // 基本情况
-      if (n <= 1) {
-          const result = n;
-          cache.set(n, result); // 存入缓存
-          return result;
-      }
-
-      // 递归计算并缓存结果
-      const result = fibonacci2(n - 1) + fibonacci2(n - 2);
+    // 基本情况
+    if (n <= 1) {
+      const result = n;
       cache.set(n, result); // 存入缓存
       return result;
+    }
+
+    // 递归计算并缓存结果
+    const result = fibonacci2(n - 1) + fibonacci2(n - 2);
+    cache.set(n, result); // 存入缓存
+    return result;
   };
 })();
 
 // 测试
 console.log(fibonacci2(10)); // 55
 // console.log(fibonacci.cache); // 报错，cache 是私有的，无法直接访问
+function ListNode(val, next) {
+  this.val = val === undefined ? 0 : val;
+  this.next = next === undefined ? null : next;
+}
+let l1 = [1, 2, 4];
+
+function createList(list) {
+  let dummy = new ListNode(0); // 创建一个哑节点
+  let current = dummy; // 使用current指针来移动
+
+  while (list.length) {
+    let val = list.shift();
+    current.next = new ListNode(val);
+    current = current.next; // 移动指针到新节点
+  }
+  // console.log(dummy);
+
+  return dummy.next; // 返回哑节点的下一个节点，即真正的头节点
+}
+
+console.log(createList(l1));
+
+function reverseList(head) {
+  let prev = null; // 前驱指针，初始为 null
+  let current = head; // 当前指针，初始为头节点
+
+  while (current !== null) {
+      const next = current.next; // 保存下一个节点（关键！避免丢失后续链表）
+      current.next = prev; // 翻转当前节点的指针（指向 prev）
+      prev = current; // 前驱指针后移
+      current = next; // 当前指针后移
+  }
+
+  return prev; // 最终 prev 是新链表的头节点
+}

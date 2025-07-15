@@ -113,27 +113,42 @@ setTimeout(clear, 5000);`,
  * 无重复字符的最长子串
  * 使用滑动窗口算法
  */
+// function lengthOfLongestSubstring(s) {
+//  // 1. 初始化数据结构
+//     const charIndex = new Map();  // 哈希表：记录字符最后出现位置
+//     let left = 0;                 // 窗口左边界
+//     let maxLength = 0;            // 记录找到的最大长度
+
+//     // 2. 遍历字符串，右边界不断向右移动
+//     for (let right = 0; right < s.length; right++) {
+//         const char = s[right];    // 当前处理的字符
+
+//         // 3. 检查是否出现重复字符
+//         if (charIndex.has(char) && charIndex.get(char) >= left) {
+//             // 重复了！需要移动左边界
+//             left = charIndex.get(char) + 1;
+//         }
+
+//         // 4. 更新字符位置和最大长度
+//         charIndex.set(char, right);                    // 记录当前字符位置
+//         maxLength = Math.max(maxLength, right - left + 1);  // 更新最大长度
+//     }
+
+//     return maxLength;
+// }
 function lengthOfLongestSubstring(s) {
- // 1. 初始化数据结构
-    const charIndex = new Map();  // 哈希表：记录字符最后出现位置
-    let left = 0;                 // 窗口左边界
-    let maxLength = 0;            // 记录找到的最大长度
-
-    // 2. 遍历字符串，右边界不断向右移动
+    const charSet = new Set();
+    let left = 0, maxLength = 0;
     for (let right = 0; right < s.length; right++) {
-        const char = s[right];    // 当前处理的字符
-
-        // 3. 检查是否出现重复字符
-        if (charIndex.has(char) && charIndex.get(char) >= left) {
-            // 重复了！需要移动左边界
-            left = charIndex.get(char) + 1;
+        const currentChar = s[right];
+        // 如果字符已存在，逐个移除左指针的字符，直到重复字符被移除
+        while (charSet.has(currentChar)) {
+            charSet.delete(s[left]);
+            left++;
         }
-
-        // 4. 更新字符位置和最大长度
-        charIndex.set(char, right);                    // 记录当前字符位置
-        maxLength = Math.max(maxLength, right - left + 1);  // 更新最大长度
+        charSet.add(currentChar);
+        maxLength = Math.max(maxLength, right - left + 1);
     }
-
     return maxLength;
 }
 
