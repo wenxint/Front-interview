@@ -2059,7 +2059,9 @@ console.log(originalArr); // [1, 2, 3, 4]（原数组不变）
 // 创建一个n×n的二维数组，所有元素初始化为0
 // Array(n).fill() 创建长度为n的数组，每个元素为undefined
 // map(() => Array(n).fill(0)) 将每个undefined替换为长度为n、值为0的数组
-const rotated = Array(n).fill().map(() => Array(n).fill(0));
+const rotated = Array(n)
+  .fill()
+  .map(() => Array(n).fill(0));
 
 /**
  * 检测对象是否存在循环引用
@@ -2078,7 +2080,7 @@ function hasCircularReference(obj) {
   function detect(obj) {
     // 基本类型或 null/undefined 直接返回 false
     // 只有对象类型才可能存在循环引用
-    if (obj === null || typeof obj !== 'object') {
+    if (obj === null || typeof obj !== "object") {
       return false;
     }
 
@@ -2130,14 +2132,14 @@ console.log(hasCircularReference({ a: 1 })); // false - 普通对象，无循环
  */
 function moveForwardSlice(arr, k) {
   if (k >= arr.length || k <= 0) {
-    throw new Error('K必须大于0且小于数组长度');
+    throw new Error("K必须大于0且小于数组长度");
   }
 
   // 取从k位置开始到末尾的元素
   const movedElements = arr.slice(k);
 
   // 创建k个空字符串填充到末尾
-  const emptySpaces = new Array(k).fill('');
+  const emptySpaces = new Array(k).fill("");
 
   // 合并数组
   return [...movedElements, ...emptySpaces];
@@ -2151,11 +2153,11 @@ function moveForwardSlice(arr, k) {
  */
 function moveBackwardSlice(arr, k) {
   if (k >= arr.length || k <= 0) {
-    throw new Error('K必须大于0且小于数组长度');
+    throw new Error("K必须大于0且小于数组长度");
   }
 
   // 创建k个空字符串填充到开头
-  const emptySpaces = new Array(k).fill('');
+  const emptySpaces = new Array(k).fill("");
 
   // 取从开头到length-k位置的元素
   const movedElements = arr.slice(0, arr.length - k);
@@ -2172,11 +2174,11 @@ function moveBackwardSlice(arr, k) {
  */
 function moveForwardIndex(arr, k) {
   if (k >= arr.length || k <= 0) {
-    throw new Error('K必须大于0且小于数组长度');
+    throw new Error("K必须大于0且小于数组长度");
   }
 
   // 创建与原数组相同长度的新数组，全部填充为空字符串
-  const result = new Array(arr.length).fill('');
+  const result = new Array(arr.length).fill("");
 
   // 将原数组从k位置开始的元素移动到新数组的开头
   for (let i = 0; i < arr.length - k; i++) {
@@ -2194,11 +2196,11 @@ function moveForwardIndex(arr, k) {
  */
 function moveBackwardIndex(arr, k) {
   if (k >= arr.length || k <= 0) {
-    throw new Error('K必须大于0且小于数组长度');
+    throw new Error("K必须大于0且小于数组长度");
   }
 
   // 创建与原数组相同长度的新数组，全部填充为空字符串
-  const result = new Array(arr.length).fill('');
+  const result = new Array(arr.length).fill("");
 
   // 将原数组的前length-k个元素移动到新数组的k位置之后
   for (let i = 0; i < arr.length - k; i++) {
@@ -2209,22 +2211,39 @@ function moveBackwardIndex(arr, k) {
 }
 
 // 使用示例
-const arr1 = ['a', 'b', 'c', 'd', 'e'];
-console.log('原数组:', arr1);
-console.log('向前移动2位:', moveForwardSlice(arr1, 2));
+const arr1 = ["a", "b", "c", "d", "e"];
+console.log("原数组:", arr1);
+console.log("向前移动2位:", moveForwardSlice(arr1, 2));
 // 输出: ['c', 'd', 'e', '', '']
 
-const arr2 = ['a', 'b', 'c', 'd', 'e'];
-console.log('原数组:', arr2);
-console.log('向后移动2位:', moveBackwardSlice(arr2, 2));
+const arr2 = ["a", "b", "c", "d", "e"];
+console.log("原数组:", arr2);
+console.log("向后移动2位:", moveBackwardSlice(arr2, 2));
 // 输出: ['', '', 'a', 'b', 'c']
 
-const arr3 = ['a', 'b', 'c', 'd', 'e'];
-console.log('原数组:', arr3);
-console.log('向前移动2位:', moveForwardIndex(arr3, 2));
+const arr3 = ["a", "b", "c", "d", "e"];
+console.log("原数组:", arr3);
+console.log("向前移动2位:", moveForwardIndex(arr3, 2));
 // 输出: ['c', 'd', 'e', '', '']
 
-const arr4 = ['a', 'b', 'c', 'd', 'e'];
-console.log('原数组:', arr4);
-console.log('向后移动2位:', moveBackwardIndex(arr4, 2));
+const arr4 = ["a", "b", "c", "d", "e"];
+console.log("原数组:", arr4);
+console.log("向后移动2位:", moveBackwardIndex(arr4, 2));
 // 输出: ['', '', 'a', 'b', 'c']
+
+const proxyArray = (arr) => {
+  const length = arr.length;
+  return new Proxy(arr, {
+    get(target, key) {
+      key = +key;
+      while (key < 0) {
+        key += length;
+      }
+      return target[key];
+    },
+  });
+};
+var ProxyArray = proxyArray([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+console.log(ProxyArray[1]); // 2
+console.log(ProxyArray[-10]); // 9
+console.log(ProxyArray[-20]); // 8
