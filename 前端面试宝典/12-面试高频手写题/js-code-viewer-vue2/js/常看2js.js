@@ -279,11 +279,32 @@ function reverseList(head) {
   let current = head; // 当前指针，初始为头节点
 
   while (current !== null) {
-      const next = current.next; // 保存下一个节点（关键！避免丢失后续链表）
-      current.next = prev; // 翻转当前节点的指针（指向 prev）
-      prev = current; // 前驱指针后移
-      current = next; // 当前指针后移
+    const next = current.next; // 保存下一个节点（关键！避免丢失后续链表）
+    current.next = prev; // 翻转当前节点的指针（指向 prev）
+    prev = current; // 前驱指针后移
+    current = next; // 当前指针后移
   }
 
   return prev; // 最终 prev 是新链表的头节点
+}
+
+/**
+ * 深度优先搜索标记安全区域
+ * @param {number} row - 当前行
+ * @param {number} col - 当前列
+ */
+function dfs(row, col) {
+  // 边界检查和有效性检查
+  if (row < 0 || row >= m || col < 0 || col >= n || board[row][col] !== "O") {
+    return;
+  }
+
+  // 标记当前单元格为安全区域
+  board[row][col] = "#";
+
+  // 递归搜索四个方向
+  dfs(row - 1, col); // 上
+  dfs(row + 1, col); // 下
+  dfs(row, col - 1); // 左
+  dfs(row, col + 1); // 右
 }
