@@ -2247,3 +2247,25 @@ var ProxyArray = proxyArray([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 console.log(ProxyArray[1]); // 2
 console.log(ProxyArray[-10]); // 9
 console.log(ProxyArray[-20]); // 8
+
+/**
+ * Fisher-Yates 洗牌算法（原地打乱数组）
+ * @param {Array} arr - 需要打乱的数组
+ * @returns {Array} 打乱后的数组（直接修改原数组，同时返回它）
+ */
+function fisherYatesShuffle(arr) {
+    // 从最后一个元素开始，向前遍历到第二个元素（索引 1）
+    for (let i = arr.length - 1; i > 0; i--) {
+        // 随机生成一个索引 j，范围是 [0, i]（包括 i）
+        const j = Math.floor(Math.random() * (i + 1));
+        // 交换位置 i 和位置 j 的元素
+        [arr[i], arr[j]] = [arr[j], arr[i]]; // ES6 解构赋值交换
+    }
+    return arr; // 返回打乱后的数组（原数组已被修改）
+}
+
+// 示例用法
+const cards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+console.log("打乱前:", cards);
+fisherYatesShuffle(cards);
+console.log("打乱后:", cards);
