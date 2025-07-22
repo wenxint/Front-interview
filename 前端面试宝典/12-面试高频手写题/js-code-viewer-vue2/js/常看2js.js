@@ -308,3 +308,68 @@ function dfs(row, col) {
   dfs(row, col - 1); // 左
   dfs(row, col + 1); // 右
 }
+
+const flat = [
+  { id: 1, name: "部门1", pid: 0 },
+  { id: 2, name: "部门2", pid: 1 },
+  { id: 3, name: "部门3", pid: 1 },
+  { id: 4, name: "部门4", pid: 3 },
+  { id: 5, name: "部门5", pid: 4 },
+];
+
+function toTree(data) {
+  let res = [];
+  let map = new Map();
+  data.forEach((element) => {
+    element.child = [];
+    map.set(element.id, element);
+  });
+  data.forEach((element) => {
+    let current = element;
+    let parent = map.get(current.pid);
+    if (parent) {
+      parent.child.push(current);
+    } else {
+      res.push(current);
+    }
+  });
+  return res;
+}
+function dfsPreOrder(root) {
+  const result = [];
+
+  function traverse(node) {
+    if (!node) return;
+    result.push(node); // 先访问根节点
+    if (node.child && node.child.length > 0) {
+      node.child.forEach((child) => traverse(child)); // 递归访问子节点
+    }
+  }
+
+  traverse(root);
+  return result;
+}
+function bfsTree(root) {
+  if (!root) return [];
+
+  const result = [];
+  const queue = [root]; // 初始化队列，根节点入队
+
+  while (queue.length > 0) {
+    const currentNode = queue.shift(); // 队头节点出队
+    result.push(currentNode); // 处理当前节点（可自定义操作）
+
+    // 将当前节点的子节点按顺序入队
+    if (currentNode.child && currentNode.child.length > 0) {
+      queue.push(...currentNode.child);
+    }
+  }
+
+  return result; // 返回遍历顺序的节点数组
+}
+
+// 示例调用
+const tree2 = toTree(flat); // 使用之前实现的toTree函数生成树
+console.log("BFS遍历结果:", bfsTree(tree[0])); // tree[0]是根节点
+// 示例调用
+console.log("DFS前序遍历结果:", dfsPreOrder(tree[0]));
