@@ -44,7 +44,7 @@ function buildTree(flatArr, rootId = 0) {
 
 // 使用示例
 const flatArr = [
-  { id: 1, title: "title1", parent_id: 0 },
+  { id: 1, title: "title1", parent_id: 0 }
   { id: 2, title: "title2", parent_id: 0 },
   { id: 3, title: "title2-1", parent_id: 2 },
   { id: 4, title: "title3-1", parent_id: 3 },
@@ -437,6 +437,196 @@ console.timeEnd('记忆化版本');`
   },
 
 
+
+  { id: "reverseList",
+    title: "反转链表",
+    description: "单链表反转的实现",
+    code: `/**
+ * @description 反转单链表
+ * @param {ListNode} head - 链表头节点
+ * @return {ListNode} 反转后的链表头节点
+ * @time O(n) - 只需遍历一次链表
+ * @space O(1) - 使用常数级额外空间
+ */
+function reverseList(head) {
+  let prev = null; // 前驱指针，初始为 null
+  let current = head; // 当前指针，初始为头节点
+
+  while (current !== null) {
+    const next = current.next; // 保存下一个节点（关键！避免丢失后续链表）
+    current.next = prev; // 翻转当前节点的指针（指向 prev）
+    prev = current; // 前驱指针后移
+    current = next; // 当前指针后移
+  }
+
+  return prev; // 最终 prev 是新链表的头节点
+}`
+  },
+  {
+    id: "dfsTraversal",
+    title: "深度优先搜索（DFS）二维数组边界",
+    description: "深度优先搜索遍历二维数组",
+    code: `/**
+ * @description 深度优先搜索标记安全区域
+ * @param {number} row - 当前行
+ * @param {number} col - 当前列
+ */
+function dfs(row, col) {
+  // 边界检查和有效性检查
+  if (row < 0 || row >= m || col < 0 || col >= n || board[row][col] !== "O") {
+    return;
+  }
+
+  // 标记当前单元格为安全区域
+  board[row][col] = "#";
+
+  // 递归搜索四个方向
+  dfs(row - 1, col); // 上
+  dfs(row + 1, col); // 下
+  dfs(row, col - 1); // 左
+  dfs(row, col + 1); // 右
+}`
+  },
+  {
+    id: "buildTreeAndTraverse",
+    title: "树形结构构建与遍历",
+    description: "将扁平数组转换为树形结构并实现DFS和BFS遍历",
+    code: `/**
+ * @description 将扁平数组转换为树形结构
+ * @param {Array} data - 包含id和pid的扁平数组
+ * @return {Array} 树形结构数组
+ */
+function toTree(data) {
+  let res = [];
+  let map = new Map();
+  data.forEach((element) => {
+    element.child = [];
+    map.set(element.id, element);
+  });
+  data.forEach((element) => {
+    let current = element;
+    let parent = map.get(current.pid);
+    if (parent) {
+      parent.child.push(current);
+    } else {
+      res.push(current);
+    }
+  });
+  return res;
+}
+
+/**
+ * @description 深度优先前序遍历
+ * @param {Object} root - 树的根节点
+ * @return {Array} 遍历结果数组
+ */
+function dfsPreOrder(root) {
+  const result = [];
+
+  function traverse(node) {
+    if (!node) return;
+    result.push(node); // 先访问根节点
+    if (node.child && node.child.length > 0) {
+      node.child.forEach((child) => traverse(child)); // 递归访问子节点
+    }
+  }
+
+  traverse(root);
+  return result;
+}
+
+/**
+ * @description 广度优先遍历
+ * @param {Object} root - 树的根节点
+ * @return {Array} 遍历结果数组
+ */
+function bfsTree(root) {
+  if (!root) return [];
+
+  const result = [];
+  const queue = [root]; // 初始化队列，根节点入队
+
+  while (queue.length > 0) {
+    const currentNode = queue.shift(); // 队头节点出队
+    result.push(currentNode); // 处理当前节点
+
+    // 将当前节点的子节点按顺序入队
+    if (currentNode.child && currentNode.child.length > 0) {
+      queue.push(...currentNode.child);
+    }
+  }
+
+  return result; // 返回遍历顺序的节点数组
+}`
+  },
+  {
+    id: "promiseRace",
+    title: "Promise.race 实现",
+    description: "实现Promise.race方法，返回第一个完成的Promise结果",
+    code: `/**
+ * @description 实现Promise.race
+ * @param {Promise[]} promises - Promise数组
+ * @return {Promise} 新的Promise实例
+ * @time O(1) - 立即返回Promise
+ * @space O(1) - 常数级空间复杂度
+ */
+function promiseRace(promises) {
+  if (!Array.isArray(promises)) {
+    throw new Error("promises must be an array");
+  }
+  return new Promise(function (resolve, reject) {
+    promises.forEach((p) =>
+      Promise.resolve(p).then(
+        (data) => {
+          resolve(data);
+        },
+        (err) => {
+          reject(err);
+        }
+      )
+    );
+  });
+}`
+  },
+  {
+    id: "promiseAny",
+    title: "Promise.any 实现",
+    description: "实现Promise.any方法，返回第一个成功的Promise结果",
+    code: `/**
+ * @description 实现Promise.any
+ * @param {Promise[]} arr - Promise数组
+ * @return {Promise} 新的Promise实例
+ * @time O(1) - 立即返回Promise
+ * @space O(n) - 存储错误信息的数组
+ */
+function myPromiseAny(arr) {
+  if (!Array.isArray(arr)) {
+    return Promise.reject(new TypeError("Argument must be an array"));
+  }
+  if (arr.length === 0) {
+    return Promise.reject(new AggregateError([], "All promises were rejected"));
+  }
+
+  let rejectCount = 0;
+  const errors = []; // 存储所有失败错误
+
+  return new Promise((resolve, reject) => {
+    arr.forEach((item) => {
+      Promise.resolve(item)
+        .then((data) => {
+          resolve(data); // 任一成功立即返回
+        })
+        .catch((error) => {
+          errors.push(error); // 收集错误
+          rejectCount++;
+          if (rejectCount === arr.length) {
+            reject(new AggregateError(errors, "All promises were rejected"));
+          }
+        });
+    });
+  });
+}`
+  }
 ];
 
 //如果需要与原data.js合并，可以这样使用：
