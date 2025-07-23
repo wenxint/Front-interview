@@ -373,3 +373,50 @@ const tree2 = toTree(flat); // 使用之前实现的toTree函数生成树
 console.log("BFS遍历结果:", bfsTree(tree[0])); // tree[0]是根节点
 // 示例调用
 console.log("DFS前序遍历结果:", dfsPreOrder(tree[0]));
+
+function promiseRace(promises) {
+  if (!Array.isArray(promises)) {
+    throw new Error("promises must be an array");
+  }
+  return new Promise(function (resolve, reject) {
+    promises.forEach((p) =>
+      Promise.resolve(p).then(
+        (data) => {
+          resolve(data);
+        },
+        (err) => {
+          reject(err);
+        }
+      )
+    );
+  });
+}
+// 一旦 resolve(data) 或 reject(err) 被调用，Promise 的状态就会固定（fulfilled 或 rejected），后续的 resolve/reject 调用会被静默忽略。
+// 因此，即使 forEach 遍历了所有 Promise，​只有第一个完成的 Promise 的回调会真正生效，后续的调用不会改变结果。
+function myPromiseAny(arr) {
+  if (!Array.isArray(arr)) {
+    return Promise.reject(new TypeError("Argument must be an array")); // 更规范的错误类型
+  }
+  if (arr.length === 0) {
+    return Promise.reject(new AggregateError([], "All promises were rejected")); // 空数组直接失败
+  }
+
+  let rejectCount = 0;
+  const errors = []; // 存储所有失败错误
+
+  return new Promise((resolve, reject) => {
+    arr.forEach((item) => {
+      Promise.resolve(item) // 确保处理非 Promise 值
+        .then((data) => {
+          resolve(data); // 任一成功立即返回
+        })
+        .catch((error) => {
+          errors.push(error); // 收集错误
+          rejectCount++;
+          if (rejectCount === arr.length) {
+            reject(new AggregateError(errors, "All promises were rejected")); // 传递所有错误
+          }
+        });
+    });
+  });
+}
