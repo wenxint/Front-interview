@@ -24,6 +24,150 @@ SSO单点登录是现代Web应用中重要的安全机制，广泛应用于企�
 3. **认证凭证**：通常是令牌(token)，证明用户已通过身份验证
 4. **信任关系**：IdP与SP之间预先建立的信任机制
 
+## 单点登录（SSO）跨域实现方案
+
+## 一、核心问题背景
+- **场景**：企业拥有两个独立域名系统 `a.com` 和 `b.com`，需实现用户只需登录一次即可访问两个系统的单点登录（SSO）。
+- **核心挑战**：浏览器同源策略限制不同域名间的 Cookie 共享，需通过第三方认证中心解决身份传递问题。
+
+---
+
+## 二、SSO 核心原理
+通过引入独立的**认证中心（SSO Server）**（如 `sso.com`），所有子系统（`a.com` 和 `b.com`）通过该中心验证用户身份。用户只需在 `sso.com` 登录一次，后续访问其他子系统时无需重复登录。
+
+---
+
+## 三、详细实现流程
+
+### 1. 用户首次访问 `a.com`（未登录）
+1. **`a.com` 检测本地无有效 Session**  
+   - 重定向到 `sso.com` 的登录页，携带回调地址（`service` 参数）：  
+     ```http
+     GET `https://sso.com/login?service=https%3A%2F%2Fa.com%2Fcallback`  
+     ```
+
+2. **`sso.com` 处理登录请求**  
+   - **情况1：`sso.com` 无 Cookie（用户未登录）**  
+     - 展示登录页面，用户提交账号密码后验证：  
+       ```javascript
+       // sso.com 的登录接口（POST /do-login）
+       app.post('/do-login', (req, res) => {
+         const { username, password } = req.body;
+         if (validateUser(username, password)) {
+           // 1. 在 sso.com 的域下设置 Cookie（关键！）
+           res.cookie('sso_token', 'abc123', { 
+             domain: '.sso.com', // 允许所有子路径访问
+             httpOnly: true,     // 防止 XSS
+             secure: true        // 仅 HTTPS
+           });
+            
+           // 2. 生成一次性服务票据（ST）
+           const st = generateRandomToken();
+           storeSTInCache(st, { userId: 123, username: 'user1' });
+            
+           // 3. 重定向回 a.com/callback，携带 ST
+           res.redirect(`${req.query.service}?ticket=${st}`);
+         }
+       });
+       ```
+   - **情况2：`sso.com` 有 Cookie（用户已登录）**  
+     - 直接生成新的 ST，重定向回 `a.com/callback`（跳过登录页）。
+
+3. **`a.com` 验证 ST 并完成登录**  
+   - 接收 `sso.com` 返回的 ST（如 `a.com/callback?ticket=ST-123`），向 `sso.com` 发起验证请求：  
+     ```javascript
+     // a.com 的回调接口（GET /callback）
+     app.get('/callback', async (req, res) => {
+       const { ticket } = req.query;
+       const response = await fetch(`https://sso.com/validate?ticket=${ticket}`);
+       const userData = await response.json(); // { userId: 123, username: 'user1' }
+        
+       if (userData) {
+         req.session.user = userData; // 设置本地 Session
+         res.send('登录成功！');
+       }
+     });
+     ```
+
+---
+
+### 2. 用户访问 `b.com`（未登录）
+1. **`b.com` 检测本地无 Session**  
+   - 重定向到 `sso.com`，携带 `b.com` 的回调地址：  
+     ```http
+     GET `https://sso.com/login?service=https%3A%2F%2Fb.com%2Fcallback`  
+     ```
+
+2. **`sso.com` 发现已登录（关键步骤！）**  
+   - **浏览器访问 `sso.com` 时自动携带 `sso_token` Cookie**（因域名匹配 `.sso.com`），`sso.com` 通过检查自己的 Cookie 发现用户已登录。  
+   - 直接生成新的 ST，重定向回 `b.com/callback`（无需展示登录页）。
+
+3. **`b.com` 验证 ST 并完成登录**  
+   - 流程与 `a.com` 完全一致，最终设置本地 Session。
+
+---
+
+## 四、关键问题解答
+
+### 问题1：为什么 `a.com/callback` 接收 ST 后还要向 `sso.com` 发起验证请求？
+1. **防止伪造攻击**  
+   - ST 是随机字符串，必须通过 `sso.com` 的权威验证才能确认其有效性，避免攻击者伪造 ST 欺骗系统。
+2. **确保一次性使用**  
+   - `sso.com` 在验证 ST 后会立即删除或标记为已使用，防止重复使用（防重放攻击）。
+
+### 问题2：用户访问 `b.com` 时，`sso.com` 如何发现已登录？
+1. **`sso.com` 的独立 Cookie**  
+   - 用户首次登录 `a.com` 时，`sso.com` 在自己的域名下设置了 Cookie（如 `sso_token=abc123`）。  
+   - 当用户访问 `b.com` 被重定向到 `sso.com` 时，浏览器会自动携带该 Cookie（同域名规则），`sso.com` 通过检查 Cookie 发现用户已登录。
+
+2. **跨域隔离性**  
+   - `a.com` 和 `b.com` 无法直接读取 `sso.com` 的 Cookie，但 `sso.com` 自己可以读取，从而判断用户是否已登录。
+
+---
+
+## 五、安全性设计
+
+### 1. ST 的安全性
+- **一次性使用**：验证后立即失效。
+- **短期有效期**：通常 5 分钟内有效。
+- **HTTPS 传输**：防止中间人劫持。
+
+### 2. SSO Server 的 Cookie 安全
+- **Domain 设置**：`.sso.com` 允许所有子路径访问。
+- **HttpOnly + Secure**：防止 XSS 和明文传输。
+
+### 3. 防 CSRF 措施
+- 在回调接口中校验 `state` 参数（随机字符串），防止跨站请求伪造。
+
+---
+
+## 六、架构图解
+```mermaid
+sequenceDiagram
+    participant User
+    participant a_com
+    participant sso_com
+    participant b_com
+
+    User->>a_com: 访问 a.com（未登录）
+    a_com->>sso_com: 重定向到 sso.com/login?service=a.com/callback
+    sso_com->>User: 展示登录页
+    User->>sso_com: 提交账号密码
+    sso_com->>sso_com: 设置 sso_token Cookie，生成 ST
+    sso_com->>a_com: 重定向回 a.com/callback?ticket=ST-123
+    a_com->>sso_com: 验证 ST 有效性（GET /validate）
+    sso_com->>a_com: 返回用户身份
+    a_com->>User: 设置本地 Session，登录成功
+
+    User->>b_com: 访问 b.com（未登录）
+    b_com->>sso_com: 重定向到 sso.com/login?service=b.com/callback
+    sso_com->>sso_com: 检查 sso_token Cookie（已登录）
+    sso_com->>b_com: 生成新 ST，重定向回 b.com/callback?ticket=ST-789
+    b_com->>sso_com: 验证 ST 有效性
+    sso_com->>b_com: 返回用户身份
+    b_com->>User: 设置本地 Session，登录成功
+```
+
 ## 实现原理
 
 ### SSO的基本流程
@@ -39,6 +183,19 @@ SSO单点登录是现代Web应用中重要的安全机制，广泛应用于企�
 ### 基于令牌的SSO实现
 
 ```javascript
+## 跨域场景处理
+
+在SSO实现中，当身份提供商(IdP)和服务提供商(SP)位于不同域名时，跨域资源共享(CORS)配置至关重要。以下是完整的跨域处理方案：
+
+### CORS配置与跨域Cookie
+
+#### 关键配置说明
+- **origin**: 明确指定允许的SP域名，避免使用`*`通配符(与credentials不兼容)
+- **credentials**: 必须设为true，允许跨域请求携带Cookie
+- **withCredentials**: 客户端请求必须设置此属性为true
+- **SameSite**: Cookie属性控制跨站请求携带策略，Lax模式是兼容性与安全性的平衡
+- **domain**: 设置为父域名(如`.example.com`)可实现子域间Cookie共享
+
 // SSO认证流程简化示例
 
 // 1. 用户访问SP应用
@@ -69,7 +226,13 @@ app.post('/login', (req, res) => {
       // 生成SSO令牌
       const ssoToken = generateToken(user);
       // 设置令牌cookie
-      res.cookie('sso_token', ssoToken, { httpOnly: true, secure: true });
+      res.cookie('sso_token', ssoToken, {
+  httpOnly: true, 
+  secure: true,
+  domain: '.example.com', // 主域名，允许子域共享
+  sameSite: 'Lax', // 控制跨站请求携带Cookie
+  maxAge: 3600000 // 1小时有效期
+});
       // 重定向回SP应用
       res.redirect(req.query.redirect);
     })
@@ -237,7 +400,17 @@ const cors = require('cors');
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: true, credentials: true }));
+// 配置CORS以支持跨域请求
+app.use(cors({
+  origin: ['https://app1.example.com', 'https://app2.example.com'], // 明确指定允许的SP域名
+  credentials: true, // 允许跨域请求携带Cookie
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Set-Cookie'], // 允许客户端访问的响应头
+  maxAge: 86400 // 预检请求缓存时间(秒)
+}));
+// 处理预检请求
+app.options('*', cors());
 
 // 配置
 const SSO_SECRET = 'your-sso-secret-key';
@@ -366,7 +539,8 @@ const requireAuth = async (req, res, next) => {
     const response = await axios.post(`${SSO_SERVER}/validate-token`, {
       token: req.cookies.sso_token
     }, {
-      headers: { 'Origin': SP_URL }
+      headers: { 'Origin': SP_URL },
+withCredentials: true // 允许跨域请求携带Cookie
     });
 
     if (response.data.valid) {
@@ -558,7 +732,55 @@ SSO(单点登录)是一种身份认证技术，允许用户只需一次登录就
    - 恢复演练
    - 明确的故障处理流程
 
-### 问题4: 什么是JWT？在SSO中如何使用JWT？
+### 问题4: SSO实现中如何处理跨域问题？
+
+**参考答案**：
+SSO中的跨域问题主要涉及跨域资源共享(CORS)和跨域Cookie传递，解决方案包括：
+
+1. **CORS配置**：
+   ```javascript
+   // IdP端配置
+   app.use(cors({
+     origin: ['https://app1.example.com', 'https://app2.example.com'], // 明确指定允许的SP域名
+     credentials: true, // 允许跨域请求携带Cookie
+     methods: ['GET', 'POST', 'OPTIONS'],
+     allowedHeaders: ['Content-Type', 'Authorization'],
+     exposedHeaders: ['Set-Cookie'],
+     maxAge: 86400
+   }));
+   ```
+
+2. **跨域Cookie设置**：
+   ```javascript
+   res.cookie('sso_token', ssoToken, {
+     httpOnly: true, 
+     secure: true,
+     domain: '.example.com', // 父域名共享
+     sameSite: 'Lax', // 平衡兼容性与安全性
+     maxAge: 3600000
+   });
+   ```
+
+3. **客户端请求配置**：
+   ```javascript
+   // 客户端fetch请求
+   fetch('https://idp.example.com/validate-token', {
+     method: 'POST',
+     credentials: 'include', // 关键：允许跨域请求携带Cookie
+     headers: {
+       'Content-Type': 'application/json',
+       'Origin': 'https://app1.example.com'
+     },
+     body: JSON.stringify({ token: '...' })
+   });
+   ```
+
+4. **SameSite Cookie策略**：
+   - `SameSite: Strict`：完全禁止跨站Cookie携带
+   - `SameSite: Lax`：允许GET请求携带
+   - `SameSite: None`：需要配合Secure属性使用
+
+### 问题5: 什么是JWT？在SSO中如何使用JWT？
 
 **参考答案**：
 JWT(JSON Web Token)是一种紧凑的、URL安全的方式，用于表示在双方之间传递的声明。JWT由三部分组成：头部(Header)、载荷(Payload)和签名(Signature)。
@@ -582,6 +804,18 @@ JWT(JSON Web Token)是一种紧凑的、URL安全的方式，用于表示在双�
 - 应设置合理的过期时间
 - 确保签名密钥安全
 - 实现有效的令牌撤销机制
+
+## 跨域实现注意事项
+
+### 浏览器兼容性问题
+- **SameSite属性**：在IE和旧版浏览器中不被支持，可能需要降级方案
+- **预检请求**：某些浏览器对复杂请求会发送OPTIONS预检请求
+- **第三方Cookie**：部分浏览器默认阻止第三方Cookie(如Safari)
+
+### 安全性权衡
+- **origin验证**：必须严格验证来源，避免恶意网站伪造请求
+- **HTTPS依赖**：跨域Cookie和secure属性依赖HTTPS环境
+- **CSRF防护**：即使使用SSO，仍需在各SP端实施CSRF防护
 
 ## 扩展思考
 
