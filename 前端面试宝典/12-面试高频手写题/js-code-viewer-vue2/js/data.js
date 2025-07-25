@@ -178,7 +178,18 @@ console.log(lengthOfLongestSubstring("pwwkew"));   // 输出: 3 ("wke")`,
  */
 function formatNumberWithCommas(num) {
   return num.toString().replace(/(?=(\\B\\d{3})+$)/g, ",");
-}`,
+}
+  function addDot(str) {
+          str = str + "";
+          let strArr = [...str].reverse();
+          for (let i = strArr.length - 1; i >= 0; i--) {
+            if (i % 3 == 1 && i !== strArr.length - 1) {
+              strArr.splice(i, 0, ",");
+            }
+          }
+          console.log(strArr.reverse().join(""));
+        }  
+`,
   },
   {
     id: "floatEqual",
@@ -1550,7 +1561,6 @@ console.log('按4分割:', chunkArray(arr, 4)); // [[1,2,3,4], [5,6,7,8], [9,10]
 const fruits = ['apple', 'banana', 'cherry', 'date', 'elderberry'];
 console.log('水果按2分组:', chunkArray(fruits, 2)); // [['apple','banana'], ['cherry','date'], ['elderberry']]`,
   },
-
 ];
 
 // 新增的代码片段
@@ -1839,7 +1849,7 @@ const unsortedArray = [34, 12, 45, 6, 89, 23];
 console.log("排序前的数组:", unsortedArray);
 const sortedArray = heapSort([...unsortedArray]); // 使用副本避免修改原数组
 console.log("排序后的数组:", sortedArray);`,
-  }
+  },
 ];
 
 // 合并到主数组
@@ -2468,7 +2478,7 @@ Array.prototype.myMap = function (callback, thisArg) {
 
   // 5. 返回新数组
   return result;
-};`
+};`,
   },
   {
     id: "getRandomInt",
@@ -2480,7 +2490,7 @@ function getRandomInt(min, max) {
 }
 
 const randomNum = getRandomInt(1, 10);
-console.log(randomNum); // 可能是 1, 2, ..., 10`
+console.log(randomNum); // 可能是 1, 2, ..., 10`,
   },
   {
     id: "arrayMoveSlice",
@@ -2537,7 +2547,7 @@ console.log('向前移动2位:', moveForwardSlice(arr1, 2));
 const arr2 = ['a', 'b', 'c', 'd', 'e'];
 console.log('原数组:', arr2);
 console.log('向后移动2位:', moveBackwardSlice(arr2, 2));
-// 输出: ['', '', 'a', 'b', 'c']`
+// 输出: ['', '', 'a', 'b', 'c']`,
   },
   {
     id: "arrayMoveIndex",
@@ -2596,8 +2606,8 @@ console.log('向前移动2位:', moveForwardIndex(arr3, 2));
 const arr4 = ['a', 'b', 'c', 'd', 'e'];
 console.log('原数组:', arr4);
 console.log('向后移动2位:', moveBackwardIndex(arr4, 2));
-// 输出: ['', '', 'a', 'b', 'c']`
-  }
+// 输出: ['', '', 'a', 'b', 'c']`,
+  },
 ];
 
 // 将新代码块合并到主数组

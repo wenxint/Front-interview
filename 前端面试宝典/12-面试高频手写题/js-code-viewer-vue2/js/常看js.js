@@ -174,6 +174,17 @@ var str = "100000000000",
   reg = /(?=(\B\d{3})+$)/g;
 str.replace(reg, ",");
 
+function addDot(str) {
+  str = str + "";
+  let strArr = [...str].reverse();
+  for (let i = strArr.length - 1; i >= 0; i--) {
+    if (i % 3 == 1 && i !== strArr.length - 1) {
+      strArr.splice(i, 0, ",");
+    }
+  }
+  console.log(strArr.reverse().join(""));
+}
+
 // 实现一个函数，0.1+0.2=0.3
 /**
  * @description 判断两个浮点数是否近似相等
@@ -2254,14 +2265,14 @@ console.log(ProxyArray[-20]); // 8
  * @returns {Array} 打乱后的数组（直接修改原数组，同时返回它）
  */
 function fisherYatesShuffle(arr) {
-    // 从最后一个元素开始，向前遍历到第二个元素（索引 1）
-    for (let i = arr.length - 1; i > 0; i--) {
-        // 随机生成一个索引 j，范围是 [0, i]（包括 i）
-        const j = Math.floor(Math.random() * (i + 1));
-        // 交换位置 i 和位置 j 的元素
-        [arr[i], arr[j]] = [arr[j], arr[i]]; // ES6 解构赋值交换
-    }
-    return arr; // 返回打乱后的数组（原数组已被修改）
+  // 从最后一个元素开始，向前遍历到第二个元素（索引 1）
+  for (let i = arr.length - 1; i > 0; i--) {
+    // 随机生成一个索引 j，范围是 [0, i]（包括 i）
+    const j = Math.floor(Math.random() * (i + 1));
+    // 交换位置 i 和位置 j 的元素
+    [arr[i], arr[j]] = [arr[j], arr[i]]; // ES6 解构赋值交换
+  }
+  return arr; // 返回打乱后的数组（原数组已被修改）
 }
 
 // 示例用法
