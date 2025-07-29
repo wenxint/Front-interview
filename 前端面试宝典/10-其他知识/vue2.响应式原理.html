@@ -57,9 +57,10 @@
 function defineReactive(obj, key, val) {
   log(`[初始化] 为${key}创建响应式`, 'dep-log');
   if (typeof val === 'object' && val !== null) {
+    //每一个对象都要创建一个观察者
     new Observer(val);
   }
-
+  //每一个对象属性都有y一个依赖,收集对应的属性值
   const dep = new Dep();
 
   Object.defineProperty(obj, key, {
@@ -160,17 +161,18 @@ class Vue {
     this.$data = options.data;
     this.$el = document.querySelector(options.el);
     this.$options = options;
-
+// 先走Observer
     new Observer(this.$data);
     this._compile();
     log(`[Vue实例] 初始化完成`, 'watcher-log');
   }
-
+//取出所有插值表达式,为每个插值表达式创建唯一的uid,创建Watcher
   _compile() {
     const html = this.$el.innerHTML;
     // 为每个插值表达式创建带有唯一标识的span元素
     this.$el.innerHTML = html.replace(/\{\{(.+?)\}\}/g, (match, exp) => {
       exp = exp.trim();
+      // 为每个插值表达式创建唯一的uid
       const uid = `vue-exp-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
       // 创建Watcher时保存uid
       new Watcher(this, exp, (newVal) => {
