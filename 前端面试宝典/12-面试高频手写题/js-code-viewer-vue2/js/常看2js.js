@@ -460,3 +460,27 @@ function addLargeNumbers(num1, num2) {
 
   return result; // 返回最终结果
 }
+function sum(...initialArgs) {
+  // 存储所有传入的参数
+  let args = [...initialArgs];
+  
+  // 定义一个可以继续接受参数的函数
+  function nextSum(...nextArgs) {
+    args = args.concat(nextArgs);
+    return nextSum; // 返回自身以支持链式调用
+  }
+  
+  // 添加 sumOf 方法来计算总和
+  nextSum.sumOf = function() {
+    return args.reduce((total, num) => total + num, 0);
+  };
+  
+  // 初始调用时也返回 nextSum 函数以支持链式调用
+  return nextSum;
+}
+
+// 测试用例
+console.log(sum(1, 2).sumOf()); // 3
+console.log(sum(1, 2)(3).sumOf()); // 6
+console.log(sum(1)(2, 3, 4).sumOf()); // 10
+console.log(sum(1, 2)(3, 4)(5).sumOf()); // 15
