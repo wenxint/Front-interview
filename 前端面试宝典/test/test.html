@@ -1,12 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh - CN">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF - 8">
+  <meta name="viewport" content="width=device-width, initial - scale=1.0">
+  <title>Document</title>
 </head>
+
 <body>
-    <div id="app"></div>
-    <script src="test.js"></script>
+  <script>
+    // 创建一些临时对象模拟内存占用
+    let arr = [];
+    for (let i = 0; i < 1000000; i++) {
+      arr.push(new Array(1000).fill(i));
+    }
+    console.log('创建了大量对象后内存占用情况');
+    // 尝试手动触发垃圾回收（仅在支持的浏览器环境下有效）
+    if (typeof window.gc === 'function') {
+      window.gc();
+      console.log('已手动触发垃圾回收');
+    } else {
+      console.log('当前浏览器不支持 window.gc() 方法');
+    }
+  </script>
 </body>
+
 </html>
