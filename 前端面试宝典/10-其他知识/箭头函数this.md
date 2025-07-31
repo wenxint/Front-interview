@@ -368,3 +368,45 @@ Final seconds: 3
 - setInterval的回调函数是箭头函数，定义时外层作用域是Timer构造函数的作用域，this指向timer对象；
 - 因此，每次回调执行时，都会正确地递增timer对象的seconds属性；
 - 3秒后，timer.seconds的值为3，所以输出'Final seconds: 3'。
+
+### 19. 分析以下代码，写出执行结果并解释原因。
+
+```javascript
+const obj = {
+  name: "Object",
+  regularFunc: function () {
+    console.log(this.name);
+    return () => {
+      console.log(this.name);
+    };
+  },
+  arrowFunc: () => {
+    console.log(this.name);
+  },
+};
+
+const regularFunc = obj.regularFunc;
+const arrowFunc = obj.arrowFunc;
+
+regularFunc()(); // 输出什么？为什么？
+arrowFunc(); // 输出什么？为什么？
+```
+
+**答案**：
+
+```
+undefined
+undefined
+undefined
+```
+
+> 注意：如果在全局作用域中定义了`global.name = 'global'`（Node.js环境）或`window.name = 'global'`（浏览器环境），那么最后一次输出会是`global`而不是`undefined`。
+
+**解析**：
+
+- `regularFunc`是普通函数，当通过`regularFunc = obj.regularFunc`赋值后，直接调用`regularFunc()`时，函数上下文（this）指向全局对象（在浏览器中是window，在Node.js中是global）；
+  - 由于全局对象中没有定义`name`属性（假设未在其他地方定义），所以第一次输出`undefined`；
+  - `regularFunc()`返回一个箭头函数，这个箭头函数定义时的外层作用域是`regularFunc`函数的作用域，此时`regularFunc`函数的`this`指向全局对象，因此箭头函数的`this`也指向全局对象；
+  - 所以调用返回的箭头函数时，输出的`this.name`仍然是`undefined`（假设全局对象的`name`属性未定义）；
+- `arrowFunc`是箭头函数，定义时的外层作用域是全局作用域，因此`this`指向全局对象；
+  - 同样，由于全局对象中没有定义`name`属性，所以输出`undefined`。
