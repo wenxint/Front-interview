@@ -550,3 +550,17 @@ retryRequest(mockRequest)
   .catch((error) => {
     console.error("最终失败:", error.message);
   });
+
+const xhr = new XMLHttpRequest();
+xhr.open("POST", "https://api.example.com/data", true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.onreadystatechange = function() {
+  if (xhr.readyState === 4) {
+    if (xhr.status === 200) {
+      console.log("响应数据:", xhr.responseText);
+    } else {
+      console.error("请求失败，状态码:", xhr.status);
+    }
+  }
+};
+xhr.send(JSON.stringify({ key: "value" }));
