@@ -438,28 +438,40 @@ function compareVersions(versions) {
     return 0;
   });
 }
-function addLargeNumbers(num1, num2) {
-  let result = ""; // 存储结果
-  let carry = 0; // 进位
-  let i = num1.length - 1; // num1 的索引
-  let j = num2.length - 1; // num2 的索引
+function bigAdd(a, b) {
+  let alen = a.length - 1;
+  let blen = b.length - 1;
+  let result = "";
+  let carry = 0; // 更清晰的变量名：nextOne -> carry
 
-  // 从后向前逐位相加
-  while (i >= 0 || j >= 0 || carry > 0) {
-    const digit1 = i >= 0 ? parseInt(num1[i]) : 0; // 获取 num1 当前位数字
-    const digit2 = j >= 0 ? parseInt(num2[j]) : 0; // 获取 num2 当前位数字
+  while (alen >= 0 || blen >= 0 || carry) {
+    // 安全获取当前位的数字（如果已遍历完则补0）
+    const aDigit = a[alen] ? parseInt(a[alen], 10) : 0;
+    const bDigit = b[blen] ? parseInt(b[blen], 10) : 0;
 
-    // 计算当前位的和
-    const sum = digit1 + digit2 + carry;
-    carry = Math.floor(sum / 10); // 计算进位
-    result = (sum % 10) + result; // 当前位的结果
+    // 计算当前位的和（包括进位）
+    let sum = aDigit + bDigit + carry;
 
-    i--; // 移动到 num1 的前一位
-    j--; // 移动到 num2 的前一位
+    // 处理进位
+    if (sum > 9) {
+      sum = sum % 10;
+      carry = 1;
+    } else {
+      carry = 0;
+    }
+
+    // 将当前位结果拼接到最前面
+    result = sum + result;
+
+    // 移动指针
+    alen--;
+    blen--;
   }
 
-  return result; // 返回最终结果
+  console.log(result);
 }
+
+bigAdd("2223", "7890"); // 输出 "10113"
 function sum(...initialArgs) {
   // 存储所有传入的参数
   let args = [...initialArgs];
@@ -554,7 +566,7 @@ retryRequest(mockRequest)
 const xhr = new XMLHttpRequest();
 xhr.open("POST", "https://api.example.com/data", true);
 xhr.setRequestHeader("Content-Type", "application/json");
-xhr.onreadystatechange = function() {
+xhr.onreadystatechange = function () {
   if (xhr.readyState === 4) {
     if (xhr.status === 200) {
       console.log("响应数据:", xhr.responseText);
