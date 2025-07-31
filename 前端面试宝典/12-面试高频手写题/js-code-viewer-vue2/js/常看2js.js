@@ -463,18 +463,18 @@ function addLargeNumbers(num1, num2) {
 function sum(...initialArgs) {
   // 存储所有传入的参数
   let args = [...initialArgs];
-  
+
   // 定义一个可以继续接受参数的函数
   function nextSum(...nextArgs) {
     args = args.concat(nextArgs);
     return nextSum; // 返回自身以支持链式调用
   }
-  
+
   // 添加 sumOf 方法来计算总和
-  nextSum.sumOf = function() {
+  nextSum.sumOf = function () {
     return args.reduce((total, num) => total + num, 0);
   };
-  
+
   // 初始调用时也返回 nextSum 函数以支持链式调用
   return nextSum;
 }
@@ -484,3 +484,69 @@ console.log(sum(1, 2).sumOf()); // 3
 console.log(sum(1, 2)(3).sumOf()); // 6
 console.log(sum(1)(2, 3, 4).sumOf()); // 10
 console.log(sum(1, 2)(3, 4)(5).sumOf()); // 15
+
+/**
+ * 带重试机制的异步请求函数
+ * @param {Function} requestFn - 需要执行的异步请求函数（返回 Promise）
+ * @returns {Promise} - 返回最终结果（成功或失败）
+ */
+function retryRequest(requestFn) {
+  // 最大重试次数（2次：200ms 和 500ms）
+  const maxRetries = 2;
+  // 重试延迟时间（毫秒）
+  const retryDelays = [200, 500];
+  // 当前重试次数
+  let retryCount = 0;
+
+  // 定义一个递归函数来执行请求和重试
+  function executeRequest() {
+    return requestFn()
+      .then((result) => {
+        // 请求成功，直接返回结果
+        return result;
+      })
+      .catch((error) => {
+        // 请求失败，检查是否还有重试机会
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const delay = retryDelays[retryCount - 1];
+          console.log(`请求失败，${delay}ms 后重试...（第 ${retryCount} 次）`);
+          // 延迟后再次尝试
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              resolve(executeRequest());
+            }, delay);
+          });
+        } else {
+          // 重试次数用完，返回失败
+          console.log("重试次数用完，返回失败");
+          throw error; // 抛出错误，让调用方处理
+        }
+      });
+  }
+
+  // 开始执行
+  return executeRequest();
+}
+
+// --- 测试用例 ---
+// 模拟一个可能失败的异步请求函数
+function mockRequest() {
+  return new Promise((resolve, reject) => {
+    const shouldFail = Math.random() > 0.3; // 70% 概率失败
+    if (shouldFail) {
+      reject(new Error("请求失败"));
+    } else {
+      resolve("请求成功");
+    }
+  });
+}
+
+// 调用 retryRequest 测试
+retryRequest(mockRequest)
+  .then((result) => {
+    console.log("最终结果:", result);
+  })
+  .catch((error) => {
+    console.error("最终失败:", error.message);
+  });
