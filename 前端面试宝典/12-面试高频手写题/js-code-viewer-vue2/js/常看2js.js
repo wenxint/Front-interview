@@ -438,7 +438,7 @@ function compareVersions(versions) {
     return 0;
   });
 }
-function bigAdd(a, b) {
+function addLargeNumbers(a, b) {
   let alen = a.length - 1;
   let blen = b.length - 1;
   let result = "";
