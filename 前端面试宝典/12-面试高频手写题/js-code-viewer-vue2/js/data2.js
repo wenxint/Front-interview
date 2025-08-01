@@ -626,6 +626,269 @@ function myPromiseAny(arr) {
     });
   });
 }`
+  },
+  // 以下是从常看2js.js文件424-589行添加的代码
+  {
+    id: "compareVersions",
+    title: "版本号比较",
+    description: "比较两个版本号字符串的大小",
+    code: `/**
+ * @description 比较两个版本号字符串的大小
+ * @param {string} version1 - 第一个版本号
+ * @param {string} version2 - 第二个版本号
+ * @return {number} 比较结果：1表示version1>version2，-1表示version1<version2，0表示相等
+ * @time O(max(m,n)) - m和n分别是两个版本号的长度
+ * @space O(m+n) - 存储分割后的数组
+ */
+function compareVersions(version1, version2) {
+  // 将版本号按.分割成数组
+  const v1Parts = version1.split('.');
+  const v2Parts = version2.split('.');
+  
+  // 获取较长数组的长度
+  const maxLength = Math.max(v1Parts.length, v2Parts.length);
+  
+  // 逐位比较版本号的每个部分
+  for (let i = 0; i < maxLength; i++) {
+    // 如果某个版本号的部分不存在，视为0
+    const v1Num = parseInt(v1Parts[i] || '0', 10);
+    const v2Num = parseInt(v2Parts[i] || '0', 10);
+    
+    // 比较数字大小
+    if (v1Num > v2Num) return 1;
+    if (v1Num < v2Num) return -1;
+  }
+  
+  // 所有部分都相等
+  return 0;
+}
+
+// 测试用例
+console.log(compareVersions('1.2.3', '1.2.4')); // -1
+console.log(compareVersions('1.2.3', '1.2.3')); // 0
+console.log(compareVersions('1.2.4', '1.2.3')); // 1
+console.log(compareVersions('1.2', '1.2.0')); // 0
+console.log(compareVersions('1.10', '1.2')); // 1`  
+  },
+  {
+    id: "addLargeNumbers",
+    title: "大数相加",
+    description: "实现两个大数字符串的相加运算",
+    code: `/**
+ * @description 实现两个大数字符串的相加运算
+ * @param {string} num1 - 第一个大数字符串
+ * @param {string} num2 - 第二个大数字符串
+ * @return {string} 相加结果字符串
+ * @time O(max(m,n)) - m和n分别是两个数字字符串的长度
+ * @space O(max(m,n)) - 存储结果数组
+ */
+function bigNumberAdd(num1, num2) {
+  let i = num1.length - 1; // 从 num1 的最低位开始
+  let j = num2.length - 1; // 从 num2 的最低位开始
+  let carry = 0;           // 进位标志
+  let result = '';         // 存储最终结果
+
+  // 从最低位到最高位逐位相加
+  while (i >= 0 || j >= 0 || carry > 0) {
+    // 获取当前位的数字（若已遍历完某数字，则补 0）
+    const digit1 = i >= 0 ? parseInt(num1[i--], 10) : 0;
+    const digit2 = j >= 0 ? parseInt(num2[j--], 10) : 0;
+
+    // 当前位相加 + 进位
+    const sum = digit1 + digit2 + carry;
+
+    // 计算当前位的值（取个位数）和新的进位
+    result = (sum % 10) + result; // 当前位结果
+    carry = Math.floor(sum / 10); // 新的进位
+  }
+
+  return result; // 返回最终结果字符串
+}
+
+// 测试用例
+console.log(addLargeNumbers('123456789', '987654321')); // 1111111110
+console.log(addLargeNumbers('999', '1')); // 1000
+console.log(addLargeNumbers('0', '0')); // 0`  
+  },
+  {
+    id: "sum",
+    title: "数组求和",
+    description: "实现数组元素的求和运算",
+    code: `/**
+ * @description 实现数组元素的求和运算
+ * @param {number[]} arr - 数字数组
+ * @return {number} 数组元素的和
+ * @time O(n) - 需要遍历数组一次
+ * @space O(1) - 只使用常数级额外空间
+ */
+function sum(arr) {
+  // 检查输入是否为数组
+  if (!Array.isArray(arr)) {
+    throw new Error('Input must be an array');
+  }
+  
+  // 使用reduce方法计算数组元素的和
+  return arr.reduce((accumulator, currentValue) => {
+    // 检查数组元素是否为数字
+    if (typeof currentValue !== 'number') {
+      throw new Error('Array elements must be numbers');
+    }
+    return accumulator + currentValue;
+  }, 0); // 初始值为0
+}
+
+// 测试用例
+console.log(sum([1, 2, 3, 4, 5])); // 15
+console.log(sum([10, -5, 3])); // 8
+console.log(sum([])); // 0
+
+// 错误情况测试
+try {
+  sum('not an array');
+} catch (error) {
+  console.log(error.message); // Input must be an array
+}
+
+try {
+  sum([1, 2, '3', 4]);
+} catch (error) {
+  console.log(error.message); // Array elements must be numbers
+}`  
+  },
+  {
+    id: "retryRequest",
+    title: "请求重试机制",
+    description: "实现带有重试机制的HTTP请求",
+    code: `/**
+ * @description 实现带有重试机制的HTTP请求
+ * @param {string} url - 请求URL
+ * @param {Object} options - 请求选项
+ * @param {number} maxRetries - 最大重试次数
+ * @return {Promise} 请求Promise
+ * @time O(n) - n为重试次数
+ * @space O(1) - 常数级空间复杂度
+ */
+async function retryRequest(url, options = {}, maxRetries = 3) {
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(\`HTTP error! status: \${response.status}\`);
+      }
+      return response;
+    } catch (error) {
+      console.log(\`Request failed, attempt \${i + 1}: \${error.message}\`);
+      
+      // 如果是最后一次尝试，抛出错误
+      if (i === maxRetries) {
+        throw new Error(\`Request failed after \${maxRetries + 1} attempts: \${error.message}\`);
+      }
+      
+      // 等待一段时间再重试（指数退避）
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+    }
+  }
+}
+
+// 使用示例
+// retryRequest('https://api.example.com/data')
+//   .then(response => response.json())
+//   .then(data => console.log(data))
+//   .catch(error => console.error('Final error:', error));`  
+  },
+  {
+    id: "xmlHttpRequestExample",
+    title: "XMLHttpRequest示例",
+    description: "使用原生XMLHttpRequest发送HTTP请求的示例",
+    code: `/**
+ * @description 使用原生XMLHttpRequest发送HTTP请求的示例
+ * @param {string} method - HTTP方法（GET、POST等）
+ * @param {string} url - 请求URL
+ * @param {Object} data - 请求数据（用于POST请求）
+ * @return {Promise} 请求Promise
+ */
+function xmlHttpRequestExample(method, url, data) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    
+    // 配置请求
+    xhr.open(method, url);
+    
+    // 设置请求头
+    if (method === 'POST' && data) {
+      xhr.setRequestHeader('Content-Type', 'application/json');
+    }
+    
+    // 处理响应
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(JSON.parse(xhr.responseText));
+      } else {
+        reject(new Error(\`Request failed with status \${xhr.status}: \${xhr.statusText}\`));
+      }
+    };
+    
+    // 处理网络错误
+    xhr.onerror = function() {
+      reject(new Error('Network error'));
+    };
+    
+    // 发送请求
+    if (method === 'POST' && data) {
+      xhr.send(JSON.stringify(data));
+    } else {
+      xhr.send();
+    }
+  });
+}
+
+// 使用示例
+// xmlHttpRequestExample('GET', 'https://api.example.com/data')
+//   .then(data => console.log(data))
+//   .catch(error => console.error(error));
+// 
+// xmlHttpRequestExample('POST', 'https://api.example.com/data', { key: 'value' })
+//   .then(data => console.log(data))
+//   .catch(error => console.error(error));`  
+  },
+  {
+    id: "promiseFinally",
+    title: "Promise.prototype.finally实现",
+    description: "实现Promise.prototype.finally方法",
+    code: `/**
+ * @description 实现Promise.prototype.finally方法
+ * @param {Function} callback - finally回调函数
+ * @return {Promise} 新的Promise实例
+ */
+Promise.prototype.myFinally = function(callback) {
+  // 获取当前Promise实例
+  const P = this.constructor;
+  
+  // 返回一个新的Promise
+  return this.then(
+    // 当原Promise成功时执行
+    value => P.resolve(callback()).then(() => value),
+    // 当原Promise失败时执行
+    reason => P.resolve(callback()).then(() => { throw reason; })
+  );
+};
+
+// 使用示例
+// Promise.resolve(42)
+//   .myFinally(() => {
+//     console.log('Promise completed');
+//   })
+//   .then(value => {
+//     console.log('Resolved with value:', value);
+//   });
+// 
+// Promise.reject(new Error('Something went wrong'))
+//   .myFinally(() => {
+//     console.log('Promise completed');
+//   })
+//   .catch(error => {
+//     console.log('Rejected with error:', error.message);
+//   });`  
   }
 ];
 
