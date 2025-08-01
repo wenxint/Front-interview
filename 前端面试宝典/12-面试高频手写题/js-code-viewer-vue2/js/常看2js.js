@@ -576,3 +576,14 @@ xhr.onreadystatechange = function () {
   }
 };
 xhr.send(JSON.stringify({ key: "value" }));
+
+
+Promise.prototype.myFinally = function (callback) {
+  // 返回一个新的 Promise，确保链式调用
+  return this.then(
+    // 成功时，先执行 callback，再返回原结果
+    (value) => Promise.resolve(callback()).then(() => value),
+    // 失败时，先执行 callback，再返回原错误
+    (error) => Promise.resolve(callback()).then(() => Promise.reject(error))
+  );
+};
