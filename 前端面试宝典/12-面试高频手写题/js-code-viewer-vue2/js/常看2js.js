@@ -632,3 +632,38 @@ function* getDataGenerator() {
 
 // 使用自动执行器来运行这个 Generator
 runGenerator(getDataGenerator);
+
+function myCreate(proto, propertiesObject) {
+  // 1. 创建一个空函数（构造函数）
+  function F() {}
+
+  // 2. 将该函数的 prototype 指向传入的 proto 对象
+  F.prototype = proto;
+
+  // 3. 通过 new 调用该构造函数，创建一个新对象，其 [[Prototype]] 指向 proto
+  const obj = new F();
+
+  // 4. （可选）如果传入了 propertiesObject，则处理属性描述符（暂不实现）
+  if (propertiesObject) {
+    // 这里可以后续扩展，使用 Object.defineProperties(obj, propertiesObject)
+    Object.defineProperties(obj, propertiesObject);
+  }
+
+  // 5. 返回新对象
+  return obj;
+}
+
+// 原型对象
+const person = {
+  greet() {
+    console.log(`Hello, I'm ${this.name}`);
+  },
+};
+
+// 使用手写的 myCreate 创建新对象
+const john = myCreate(person);
+john.name = "John";
+john.greet(); // 输出: Hello, I'm John
+
+// 检查原型链
+console.log(Object.getPrototypeOf(john) === person); // true
