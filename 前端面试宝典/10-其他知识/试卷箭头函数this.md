@@ -1,6 +1,5 @@
 # 箭头函数this指向专题测试卷
 
-
 1. **箭头函数的 `this` 不是由定义时的对象决定**，而是由 **定义时的外层作用域的 `this` 决定**。
 
 ## 一、选择题（共8题，每题5分）
@@ -72,7 +71,32 @@ D. 抛出错误
 **答案：A**
 **解析**：innerFunc是箭头函数，定义时外层作用域是func函数的作用域，而func函数调用时this指向obj，所以innerFunc的this也指向obj。
 
-### 4. 以下哪种情况下，箭头函数的this不会指向全局对象（ ）
+### 4. 以下代码执行后输出的结果是（ ）
+
+```javascript
+const obj = {
+  name: 'obj',
+  func: function() {
+    const innerFunc = () => {
+      console.log(this.name);
+    };
+    innerFunc();
+  }
+};
+
+let a=obj.func
+a();
+```
+
+A. obj
+B. undefined
+C. window
+D. 抛出错误
+
+**答案：B**
+**解析**：当我们将obj.func赋值给变量a时，发生了this的隐式丢失。a()调用时相当于直接调用函数，而不是作为对象的方法调用。在非严格模式下，this指向全局对象（浏览器中是window），在严格模式下则是undefined。innerFunc是箭头函数，它会继承外层作用域的this值，所以也指向全局对象或undefined。
+
+### 5. 以下哪种情况下，箭头函数的this不会指向全局对象（ ）
 
 A. 在全局作用域中定义的箭头函数
 B. 在普通函数中定义的箭头函数，且该普通函数作为对象的方法调用
@@ -82,7 +106,7 @@ D. 在定时器回调中使用的箭头函数
 **答案：B**
 **解析**：在普通函数中定义的箭头函数，其this指向普通函数的this，当普通函数作为对象的方法调用时，this指向该对象，而不是全局对象。
 
-### 5. 以下代码执行后输出的结果是（ ）
+### 6. 以下代码执行后输出的结果是（ ）
 
 ```javascript
 function Person() {
@@ -179,24 +203,24 @@ D. window
 **答案：×**
 **解析**：箭头函数没有自己的this，不能作为构造函数使用，使用new关键字调用箭头函数会抛出错误。
 
-### 11. 在对象方法中使用箭头函数，this指向该对象。（ ）
+### 12. 在对象方法中使用箭头函数，this指向该对象。（ ）
 
 **答案：×**
 **解析**：在对象方法中使用箭头函数，this指向定义时的外层作用域，通常是全局对象，而不是该对象。
 
-### 12. 箭头函数的this不能通过call()、apply()、bind()方法改变。（ ）
+### 13. 箭头函数的this不能通过call()、apply()、bind()方法改变。（ ）
 
 **答案：√**
 **解析**：箭头函数的this在定义时就已经确定，不能通过call()、apply()、bind()方法改变。
 
-### 13. 在事件监听器中使用箭头函数，this指向触发事件的元素。（ ）
+### 14. 在事件监听器中使用箭头函数，this指向触发事件的元素。（ ）
 
 **答案：×**
 **解析**：在事件监听器中使用箭头函数，this指向定义时的外层作用域，而不是触发事件的元素。如果要获取触发事件的元素，可以使用event.target。
 
 ## 三、代码分析题（共2题，每题10分）
 
-### 14. 分析以下代码，写出执行结果并解释原因。
+### 15. 分析以下代码，写出执行结果并解释原因。
 
 ```javascript
 const obj = {
@@ -238,7 +262,7 @@ func4: global
 - func3是箭头函数，定义时外层作用域是全局作用域，this指向global，所以输出'func3: global'；
 - func4是普通函数，在全局作用域中调用（因为func3是箭头函数，其内部的this指向global，而func4作为普通函数直接调用时this指向global），所以输出'func4: global'。
 
-### 15. 分析以下代码，写出执行结果并解释原因。
+### 16. 分析以下代码，写出执行结果并解释原因。
 
 ```javascript
 function Person(name) {
@@ -272,7 +296,7 @@ func2: p1
 - func1是普通函数，通过call()方法调用时this指向p2，所以输出'func1: p2'；
 - func2是箭头函数，定义时外层作用域是Person构造函数的作用域，this指向p1，且不能通过call()方法改变，所以输出'func2: p1'。
 
-### 16. 分析以下代码，写出执行结果并解释原因。
+### 17. 分析以下代码，写出执行结果并解释原因。
 
 ```javascript
 const obj = {
@@ -308,7 +332,7 @@ func3: obj
 - func2是箭头函数，定义时外层作用域是func1函数的作用域，this指向obj，所以输出'func2: obj'；
 - func3是箭头函数，定义时外层作用域是func2箭头函数的作用域，而箭头函数的this继承自外层作用域，所以this仍然指向obj，输出'func3: obj'。
 
-### 17. 分析以下代码，写出执行结果并解释原因。
+### 18. 分析以下代码，写出执行结果并解释原因。
 
 ```javascript
 const button = {
@@ -338,7 +362,7 @@ Button text: Click me
 - addEventListener是普通函数，调用时this指向button对象，所以其内部的callback箭头函数定义时外层作用域的this指向button；
 - 虽然callback是在setTimeout中执行的，但作为箭头函数，它的this不会改变，仍然指向button对象，所以输出'Button text: Click me'。
 
-### 18. 分析以下代码，写出执行结果并解释原因。
+### 19. 分析以下代码，写出执行结果并解释原因。
 
 ```javascript
 function Timer() {
@@ -372,7 +396,7 @@ Final seconds: 3
 - 因此，每次回调执行时，都会正确地递增timer对象的seconds属性；
 - 3秒后，timer.seconds的值为3，所以输出'Final seconds: 3'。
 
-### 19. 分析以下代码，写出执行结果并解释原因。
+### 20. 分析以下代码，写出执行结果并解释原因。
 
 ```javascript
 const obj = {
