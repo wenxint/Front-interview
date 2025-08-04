@@ -577,7 +577,6 @@ xhr.onreadystatechange = function () {
 };
 xhr.send(JSON.stringify({ key: "value" }));
 
-
 Promise.prototype.myFinally = function (callback) {
   // 返回一个新的 Promise，确保链式调用
   return this.then(
@@ -587,3 +586,49 @@ Promise.prototype.myFinally = function (callback) {
     (error) => Promise.resolve(callback()).then(() => Promise.reject(error))
   );
 };
+// 自动执行器：用 Promise 驱动 Generator 执行，模拟 async/await
+function runGenerator(generatorFunc) {
+  const generator = generatorFunc(); // 调用 Generator 函数，返回生成器对象
+
+  function handle(result) {
+    if (result.done) return; // 如果 Generator 已执行完毕，结束
+
+    const value = result.value;
+
+    // 如果 yield 出来的是一个 Promise
+    if (value instanceof Promise) {
+      value
+        .then((res) => {
+          // Promise 完成，将结果传回 Generator，并继续执行下一步
+          handle(generator.next(res));
+        })
+        .catch((err) => {
+          // Promise 被拒绝，将错误抛回 Generator（可被内部 try/catch 捕获）
+          handle(generator.throw(err));
+        });
+    } else {
+      // 如果不是 Promise，也继续执行（但通常我们 yield 的是 Promise）
+      handle(generator.next(value));
+    }
+  }
+
+  // 启动执行
+  try {
+    handle(generator.next());
+  } catch (err) {
+    console.error("Generator 执行出错:", err);
+  }
+}
+// 定义一个 Generator 函数，模拟 async 函数逻辑
+function* getDataGenerator() {
+  try {
+    const res1 = yield Promise.resolve("Hello");
+    const res2 = yield Promise.resolve("World");
+    console.log(res1, res2); // 输出: Hello World
+  } catch (err) {
+    console.error("捕获到错误:", err);
+  }
+}
+
+// 使用自动执行器来运行这个 Generator
+runGenerator(getDataGenerator);
