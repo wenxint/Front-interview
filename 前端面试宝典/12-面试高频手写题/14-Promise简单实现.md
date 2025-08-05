@@ -30,107 +30,62 @@ promise.then(
 );
 ```
 
-## 代码实现分析
-
-### 1. 构造函数
+## 完整代码实现
 
 ```javascript
-constructor(executor) {
-  this.state = 'pending'; // 初始状态
-  this.value = undefined; // 成功时的值
-  this.reason = undefined; // 失败时的原因
-  this.onFulfilledCallbacks = []; // 成功回调队列
-  this.onRejectedCallbacks = []; // 失败回调队列
+// 简化版Promise实现
+class MyPromise {
+  constructor(executor) {
+    this.state = 'pending'; // 初始状态
+    this.value = undefined; // 成功时的值
+    this.reason = undefined; // 失败时的原因
+    this.onFulfilledCallbacks = []; // 成功回调队列
+    this.onRejectedCallbacks = []; // 失败回调队列
 
-  // ... resolve和reject方法定义
+    const resolve = (value) => {
+      if (this.state === 'pending') {
+        this.state = 'fulfilled';
+        this.value = value;
+        // 执行所有成功回调
+        this.onFulfilledCallbacks.forEach(fn => fn());
+      }
+    };
 
-  try {
-    executor(resolve, reject);
-  } catch (err) {
-    reject(err); // 如果executor执行出错，直接reject
+    const reject = (reason) => {
+      if (this.state === 'pending') {
+        this.state = 'rejected';
+        this.reason = reason;
+        // 执行所有失败回调
+        this.onRejectedCallbacks.forEach(fn => fn());
+      }
+    };
+
+    try {
+      executor(resolve, reject);
+    } catch (err) {
+      reject(err); // 如果executor执行出错，直接reject
+    }
   }
-}
-```
 
-**核心要点**：
+  then(onFulfilled, onRejected) {
+    // 处理then的参数不是函数的情况（值穿透）
+    onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : value => value;
+    onRejected = typeof onRejected === 'function' ? onRejected : reason => { throw reason; };
 
-- 初始化Promise状态为pending
-- 创建成功和失败回调函数队列，用于存储then方法注册的回调
-- 立即执行executor函数，并传入resolve和reject方法
-- 使用try-catch捕获executor执行过程中的同步错误
-
-### 2. resolve和reject方法
-
-```javascript
-const resolve = (value) => {
-  if (this.state === 'pending') {
-    this.state = 'fulfilled';
-    this.value = value;
-    // 执行所有成功回调
-    this.onFulfilledCallbacks.forEach(fn => fn());
-  }
-};
-
-const reject = (reason) => {
-  if (this.state === 'pending') {
-    this.state = 'rejected';
-    this.reason = reason;
-    // 执行所有失败回调
-    this.onRejectedCallbacks.forEach(fn => fn());
-  }
-};
-```
-
-**核心要点**：
-
-- 只有当状态为pending时才能改变状态
-- resolve将状态改为fulfilled并存储成功值
-- reject将状态改为rejected并存储失败原因
-- 状态改变后立即执行所有已注册的对应回调函数
-
-### 3. then方法
-
-```javascript
-then(onFulfilled, onRejected) {
-  // 处理then的参数不是函数的情况（值穿透）
-  onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : value => value;
-  onRejected = typeof onRejected === 'function' ? onRejected : reason => { throw reason; };
-
-  // 返回一个新的Promise，支持链式调用
-  const promise2 = new MyPromise((resolve, reject) => {
-    if (this.state === 'fulfilled') {
-      // 异步执行onFulfilled（模拟微任务）
-      setTimeout(() => {
-        try {
-          const x = onFulfilled(this.value);
-          resolve(x); // 解析新Promise
-        } catch (err) {
-          reject(err);
-        }
-      }, 0);
-    } else if (this.state === 'rejected') {
-      // 类似fulfilled状态的处理
-      setTimeout(() => {
-        try {
-          const x = onRejected(this.reason);
-          resolve(x);
-        } catch (err) {
-          reject(err);
-        }
-      }, 0);
-    } else if (this.state === 'pending') {
-      // 如果状态还是pending，将回调存入队列
-      this.onFulfilledCallbacks.push(() => {
+    // 返回一个新的Promise，支持链式调用
+    const promise2 = new MyPromise((resolve, reject) => {
+      if (this.state === 'fulfilled') {
+        // 异步执行onFulfilled（模拟微任务）
         setTimeout(() => {
           try {
             const x = onFulfilled(this.value);
-            resolve(x);
+            resolve(x); // 解析新Promise
           } catch (err) {
             reject(err);
           }
         }, 0);
-      });
-      this.onRejectedCallbacks.push(() => {
+      } else if (this.state === 'rejected') {
+        // 类似fulfilled状态的处理
         setTimeout(() => {
           try {
             const x = onRejected(this.reason);
@@ -139,21 +94,66 @@ then(onFulfilled, onRejected) {
             reject(err);
           }
         }, 0);
-      });
-    }
-  });
+      } else if (this.state === 'pending') {
+        // 如果状态还是pending，将回调存入队列
+        this.onFulfilledCallbacks.push(() => {
+          setTimeout(() => {
+            try {
+              const x = onFulfilled(this.value);
+              resolve(x);
+            } catch (err) {
+              reject(err);
+            }
+          }, 0);
+        });
+        this.onRejectedCallbacks.push(() => {
+          setTimeout(() => {
+            try {
+              const x = onRejected(this.reason);
+              resolve(x);
+            } catch (err) {
+              reject(err);
+            }
+          }, 0);
+        });
+      }
+    });
 
-  return promise2; // 返回新Promise实现链式调用
+    return promise2; // 返回新Promise实现链式调用
+  }
 }
+
+// Promise.all的实现
+MyPromise.all = function(promises) {
+  return new MyPromise((resolve, reject) => {
+    if (!Array.isArray(promises)) {
+      return reject(new TypeError('参数必须是数组'));
+    }
+
+    const results = [];
+    let completed = 0;
+
+    if (promises.length === 0) {
+      return resolve(results);
+    }
+
+    promises.forEach((promise, index) => {
+      // 确保每个元素都是Promise
+      MyPromise.resolve(promise).then(
+        value => {
+          results[index] = value;
+          completed++;
+
+          if (completed === promises.length) {
+            resolve(results);
+          }
+        },
+        reason => reject(reason) // 有一个失败则整体失败
+      );
+    });
+  });
+};
 ```
-
-**核心要点**：
-
-- **值穿透处理**：如果then方法的参数不是函数，会将值原封不动地传递给下一个then
-- **返回新Promise**：每次调用then都会返回一个新的Promise实例，实现链式调用
-- **异步执行**：使用setTimeout模拟微任务环境，确保回调函数异步执行
-- **错误捕获**：使用try-catch捕获回调函数执行过程中的错误，并传递给下一个Promise
-- **状态处理**：根据当前Promise的状态决定是立即执行回调还是将回调加入队列
 
 ## 核心特性分析
 
@@ -255,8 +255,9 @@ p.then(
 ).then((value) => {
   console.log(value); // 输出: "新的值"（链式调用）
 });
+```
 
-### 执行过程分析
+## 执行过程分析
 
 #### 代码执行流程图
 ```
@@ -264,21 +265,23 @@ p.then(
 ├─ 执行executor函数
 │  └─ 调用setTimeout，设置2秒后执行resolve
 ├─ 调用p.then()，注册成功/失败回调
-│  └─ Promise状态为pending，回调函数进入等待队列
+│  └─ Promise状态为pending，回调函数进入onFulfilledCallbacks队列
+│     └─ onFulfilledCallbacks = [第一个then的成功回调包装函数]
 └─ 2秒后
    ├─ setTimeout回调执行
    │  └─ 调用resolve("成功！")
    │     ├─ p状态变为fulfilled
-   │     └─ p.value = "成功！"
-   ├─ 触发p的onFulfilled回调队列
-   │  └─ 执行第一个then()的成功回调
-   │     ├─ 打印"成功！"
-   │     ├─ 返回"新的值"
-   │     └─ 创建新的Promise实例p2
-   │        └─ resolve("新的值")
-   │           ├─ p2状态变为fulfilled
-   │           └─ p2.value = "新的值"
-   └─ 触发p2的onFulfilled回调队列
+   │     ├─ p.value = "成功！"
+   │     └─ 遍历执行onFulfilledCallbacks队列中的所有回调
+   ├─ 执行第一个then()的成功回调
+   │  ├─ 打印"成功！"
+   │  ├─ 返回"新的值"
+   │  └─ 创建新的Promise实例p2
+   │     └─ resolve("新的值")
+   │        ├─ p2状态变为fulfilled
+   │        ├─ p2.value = "新的值"
+   │        └─ p2的onFulfilledCallbacks队列初始化
+   └─ 触发p2的onFulfilledCallbacks队列
       └─ 执行第二个then()的成功回调
          └─ 打印"新的值"
 ```
@@ -289,21 +292,27 @@ p.then(
    - 立即执行executor函数
    - 调用`setTimeout`，设置2秒后执行resolve函数
    - Promise实例p初始状态为`pending`
+   - `p.onFulfilledCallbacks = []`（初始化成功回调队列）
 
 2. **注册回调函数**
    - 调用`then()`方法，传入成功和失败回调
-   - 由于p状态为`pending`，回调函数被存储在内部队列中
+   - 由于p状态为`pending`，成功回调被包装并添加到`p.onFulfilledCallbacks`队列
+   - 此时`p.onFulfilledCallbacks = [包装后的成功回调函数]`
    - `then()`方法返回一个新的Promise实例p2
+   - `p2.onFulfilledCallbacks = []`（初始化p2的成功回调队列）
 
 3. **异步操作完成**
    - 2秒后，`setTimeout`回调执行
    - 调用`resolve("成功！")`，将p的状态改为`fulfilled`并设置value
-   - 触发p的onFulfilled回调队列
+   - 遍历`p.onFulfilledCallbacks`队列，执行所有回调函数
+   - 执行完毕后`p.onFulfilledCallbacks`队列变为空
 
 4. **执行第一个then()回调**
    - 接收p的结果值"成功！"并打印
    - 返回"新的值"，创建新的Promise实例p2
    - 调用resolve("新的值")，将p2状态改为`fulfilled`
+   - `p2.value = "新的值"`
+   - 遍历`p2.onFulfilledCallbacks`队列，执行所有回调函数
 
 5. **执行第二个then()回调**
    - 接收p2的结果值"新的值"并打印
@@ -311,15 +320,13 @@ p.then(
 
 #### 关键执行时序
 
-| 时间点 | 事件 | 状态变化 | 数据传递 |
-|--------|------|----------|----------|
-| 0ms | 创建Promise实例p | p: pending | - |
-| 0ms | 调用p.then() | p: pending | 回调函数入队 |
-| 2000ms | 执行resolve("成功！") | p: fulfilled | p.value = "成功！" |
-| 2000ms+ | 执行第一个then回调 | p2: fulfilled | p2.value = "新的值" |
-| 2000ms++ | 执行第二个then回调 | p3: fulfilled | p3.value = undefined |
-```
-
+| 时间点 | 事件 | 状态变化 | 数据传递 | onFulfilledCallbacks状态 |
+|--------|------|----------|----------|--------------------------|
+| 0ms | 创建Promise实例p | p: pending | - | p: [] |
+| 0ms | 调用p.then() | p: pending | 回调函数入队 | p: [包装后的成功回调] |
+| 2000ms | 执行resolve("成功！") | p: fulfilled | p.value = "成功！" | p: [包装后的成功回调]（即将执行） |
+| 2000ms+ | 执行第一个then回调 | p2: fulfilled | p2.value = "新的值" | p: []（已执行完毕），p2: [] |
+| 2000ms++ | 执行第二个then回调 | p3: fulfilled | p3.value = undefined | p2: []（已执行完毕） |
 
 ### 错误处理示例
 
