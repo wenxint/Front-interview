@@ -667,3 +667,60 @@ john.greet(); // 输出: Hello, I'm John
 
 // 检查原型链
 console.log(Object.getPrototypeOf(john) === person); // true
+
+
+Function.prototype.myBind = function(thisArg, ...bindArgs) {
+  // 保存原函数（this 是调用 myBind 的函数）
+  const originalFunc = this;
+  
+  // 定义绑定函数（返回的函数）
+  function boundFunc(...callArgs) {
+    // 合并绑定参数和调用参数
+    const allArgs = bindArgs.concat(callArgs);
+    
+    // 判断是否通过 new 调用（关键逻辑）
+    if (new.target === boundFunc) {
+      // new 调用时，原函数作为构造函数，this 指向新实例
+      // 使用 Reflect.construct 等价于 new originalFunc(...allArgs)
+      return new originalFunc(...allArgs);
+    } else {
+      // 普通调用时，使用绑定的 thisArg 作为上下文
+      return originalFunc.apply(thisArg, allArgs);
+    }
+  }
+  
+  // 绑定函数的 prototype 指向原函数的 prototype（保证原型链正确）
+  // 注意：必须通过 Object.create 来继承，避免共享原型的引用
+  boundFunc.prototype = Object.create(originalFunc.prototype);
+  
+  return boundFunc;
+};
+const person2 = { name: 'Alice' };
+function greet(msg) {
+  return `${msg}, ${this.name}`;
+}
+
+const boundGreet = greet.myBind(person, 'Hello');
+console.log(boundGreet()); // 输出："Hello, Alice"（this 正确绑定）
+
+function User(age) {
+  this.age = age;
+  this.intro = function() {
+    return `I'm ${this.name}, ${this.age} years old`;
+  };
+}
+User.prototype.name = 'Default';
+
+const BoundUser = User.myBind({ name: 'Bob' }); // 绑定 thisArg 为 { name: 'Bob' }
+const user = new BoundUser(20); // new 调用，thisArg 被忽略
+
+console.log(user.age); // 输出：20（构造函数正确初始化）
+console.log(user.intro()); // 输出："I'm Default, 20 years old"（this 指向新实例，原型链正确）
+function Car(brand) {
+  this.brand = brand;
+  return { type: 'vehicle' }; // 构造函数返回对象
+}
+const BoundCar = Car.myBind(null);
+const car = new BoundCar('Tesla');
+
+console.log(car); // 输出：{ type: 'vehicle' }（new 调用返回原函数的返回值）
