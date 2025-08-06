@@ -724,3 +724,32 @@ const BoundCar = Car.myBind(null);
 const car = new BoundCar('Tesla');
 
 console.log(car); // 输出：{ type: 'vehicle' }（new 调用返回原函数的返回值）
+
+/**
+ * 分批插入DOM
+ * @param {Array} data - 数据数组
+ * @param {HTMLElement} container - 容器元素
+ * @param {number} batchSize - 每批插入数量
+ */
+function batchInsert(data, container, batchSize = 500) {
+  let index = 0;
+
+  function insertBatch() {
+    const fragment = document.createDocumentFragment();
+    const end = Math.min(index + batchSize, data.length);
+
+    for (; index < end; index++) {
+      const div = document.createElement('div');
+      div.textContent = data[index];
+      fragment.appendChild(div);
+    }
+
+    container.appendChild(fragment);
+
+    if (index < data.length) {
+      requestAnimationFrame(insertBatch);
+    }
+  }
+
+  insertBatch();
+}
