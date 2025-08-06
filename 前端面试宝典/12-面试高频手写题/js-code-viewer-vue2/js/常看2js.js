@@ -753,3 +753,125 @@ function batchInsert(data, container, batchSize = 500) {
 
   insertBatch();
 }
+
+// 自定义 Promise 类，用于模拟原生 Promise 的基本功能
+class MyPromise {
+  // 构造函数，接收一个执行器函数 executor
+  constructor(executor) {
+    // 初始状态为 pending（等待中）
+    this.state = 'pending'; 
+    // 成功时的值，状态变为 fulfilled 后会被赋值
+    this.value = undefined; 
+    // 失败时的原因，状态变为 rejected 后会被赋值
+    this.reason = undefined; 
+    // 用于存放 fulfilled 状态下的回调函数队列
+    this.onFulfilledCallbacks = []; 
+    // 用于存放 rejected 状态下的回调函数队列
+    this.onRejectedCallbacks = []; 
+
+    // 定义 resolve 函数，用于将 Promise 状态置为 fulfilled
+    const resolve = (value) => {
+      // 只有状态为 pending 时才能改变状态
+      if (this.state === 'pending') {
+        this.state = 'fulfilled'; // 更新状态为 fulfilled
+        this.value = value; // 保存成功的值
+        // 执行所有在 fulfilled 状态下等待的回调函数
+        this.onFulfilledCallbacks.forEach(fn => fn());
+      }
+    };
+
+    // 定义 reject 函数，用于将 Promise 状态置为 rejected
+    const reject = (reason) => {
+      // 只有状态为 pending 时才能改变状态
+      if (this.state === 'pending') {
+        this.state = 'rejected'; // 更新状态为 rejected
+        this.reason = reason; // 保存失败的原因
+        // 执行所有在 rejected 状态下等待的回调函数
+        this.onRejectedCallbacks.forEach(fn => fn());
+      }
+    };
+
+    try {
+      // 立即执行 executor 函数，并传入 resolve 和 reject 方法
+      // 注意：executor 可能是同步的，也可能抛出异常
+      executor(resolve, reject);
+    } catch (err) {
+      // 如果 executor 执行过程中抛出错误，则捕获并调用 reject
+      reject(err);
+    }
+  }
+
+  // then 方法是 Promise 的核心，用于注册 fulfilled 和 rejected 状态的回调
+  // 并返回一个新的 Promise，以支持链式调用
+  then(onFulfilled, onRejected) {
+    // 处理值穿透：如果 then 的参数不是函数，则提供一个默认函数实现值穿透
+    // 比如：promise.then(123) 应该把 123 直接传递给下一个 then
+    onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : value => value;
+    onRejected = typeof onRejected === 'function' ? onRejected : reason => { throw reason; };
+
+    // then 方法必须返回一个新的 Promise，以实现链式调用
+    const promise2 = new MyPromise((resolve, reject) => {
+      // 封装公共的回调处理逻辑，避免重复代码
+      // callback: 当前状态的回调函数（onFulfilled 或 onRejected）
+      // valueOrReason: 回调函数的输入，可能是 this.value 或 this.reason
+      // resolve, reject: 用于控制新 Promise（promise2）的状态
+      const handleCallback = (callback, valueOrReason, resolve, reject) => {
+        // 使用 setTimeout 模拟异步执行（微任务，真实 Promise 是微任务，这里用 setTimeout 模拟宏任务）
+        setTimeout(() => {
+          try {
+            // 执行用户传入的回调函数，并得到返回值 x
+            const x = callback(valueOrReason);
+            // 尝试 resolve 新的 Promise（这里简化处理，真实情况需要处理 thenable 和 promise）
+            resolve(x);
+          } catch (err) {
+            // 如果回调执行出错，则 reject 新的 Promise
+            reject(err);
+          }
+        }, 0);
+      };
+
+      // 如果当前 Promise 的状态已经是 fulfilled
+      if (this.state === 'fulfilled') {
+        // 异步执行 onFulfilled 回调，并处理返回值和新的 Promise
+        handleCallback(onFulfilled, this.value, resolve, reject);
+      } 
+      // 如果当前 Promise 的状态已经是 rejected
+      else if (this.state === 'rejected') {
+        // 异步执行 onRejected 回调，并处理返回值和新的 Promise
+        handleCallback(onRejected, this.reason, resolve, reject);
+      } 
+      // 如果当前 Promise 的状态还是 pending（即 executor 是异步的，还未调用 resolve/reject）
+      else if (this.state === 'pending') {
+        // 将 onFulfilled 回调推入队列，等状态变成 fulfilled 后再执行
+        this.onFulfilledCallbacks.push(() => {
+          handleCallback(onFulfilled, this.value, resolve, reject);
+        });
+        // 将 onRejected 回调推入队列，等状态变成 rejected 后再执行
+        this.onRejectedCallbacks.push(() => {
+          handleCallback(onRejected, this.reason, resolve, reject);
+        });
+      }
+    });
+
+    // then 方法必须返回一个新的 Promise 对象
+    return promise2;
+  }
+}
+
+const p = new MyPromise((resolve, reject) => {
+  setTimeout(() => {
+    resolve('成功啦！');
+  }, 1000);
+});
+
+p.then(
+  value => {
+    console.log(value); // 1秒后输出：成功啦！
+    return '链式调用';
+  },
+  reason => {
+    console.error(reason);
+  }
+).then(value => {
+  console.log(value); // 输出：链式调用
+});
