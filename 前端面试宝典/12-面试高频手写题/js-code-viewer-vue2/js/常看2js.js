@@ -875,3 +875,41 @@ p.then(
 ).then(value => {
   console.log(value); // 输出：链式调用
 });
+
+function findThreeSum(nums, target) {
+  const n = nums.length;
+  
+  // 1. 先排序（便于双指针操作）
+  nums.sort((a, b) => a - b);
+
+  for (let i = 0; i < n - 2; i++) {
+    const current = nums[i];
+    const need = target - current;
+
+    let left = i + 1;
+    let right = n - 1;
+
+    while (left < right) {
+      const sum = nums[left] + nums[right];
+
+      if (sum === need) {
+        // 找到一个解就返回
+        return [current, nums[left], nums[right]];
+      } else if (sum < need) {
+        left++; // 需要更大的数
+      } else {
+        right--; // 需要更小的数
+      }
+    }
+  }
+
+  // 如果没有找到，返回空数组或 null
+  return []; // 或者 return null;
+}
+
+// 示例测试
+const nums = [1, 5, 8, 10, 12];
+const target = 19;
+
+const result = findThreeSum(nums, target);
+console.log(result); // 输出可能是 [1, 8, 10] 或 [5, 8, 6]（但这里正好是 [1, 8, 10] = 19）
