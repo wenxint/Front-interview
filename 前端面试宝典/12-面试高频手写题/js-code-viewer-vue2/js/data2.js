@@ -889,6 +889,381 @@ Promise.prototype.myFinally = function(callback) {
 //   .catch(error => {
 //     console.log('Rejected with error:', error.message);
 //   });`  
+  },
+  {
+    id: "runGenerator",
+    title: "Generator自动执行器",
+    description: "模拟async/await原理，自动执行Generator函数",
+    code: `/**
+ * @description 自动执行器：用Promise驱动Generator执行，模拟async/await
+ * @param {Function} generatorFunc - Generator函数
+ * @return {Promise} Promise实例
+ */
+function runGenerator(generatorFunc) {
+  const generator = generatorFunc(); // 调用Generator函数，返回生成器对象
+
+  function handle(result) {
+    if (result.done) return; // 如果Generator已执行完毕，结束
+
+    const value = result.value;
+
+    // 如果yield出来的是一个Promise
+    if (value instanceof Promise) {
+      value
+        .then((res) => {
+          // Promise完成，将结果传回Generator，并继续执行下一步
+          handle(generator.next(res));
+        })
+        .catch((err) => {
+          // Promise被拒绝，将错误抛回Generator（可被内部try/catch捕获）
+          handle(generator.throw(err));
+        });
+    } else {
+      // 如果不是Promise，也继续执行（但通常我们yield的是Promise）
+      handle(generator.next(value));
+    }
+  }
+
+  // 启动执行
+  try {
+    handle(generator.next());
+  } catch (err) {
+    console.error("Generator执行出错:", err);
+  }
+}
+
+// 定义一个Generator函数，模拟async函数逻辑
+function* getDataGenerator() {
+  try {
+    const res1 = yield Promise.resolve("Hello");
+    const res2 = yield Promise.resolve("World");
+    console.log(res1, res2); // 输出: Hello World
+  } catch (err) {
+    console.error("捕获到错误:", err);
+  }
+}
+
+// 使用自动执行器来运行这个Generator
+runGenerator(getDataGenerator);`
+  },
+  {
+    id: "myCreate",
+    title: "Object.create实现",
+    description: "模拟Object.create方法的实现",
+    code: `/**
+ * @description 模拟Object.create实现
+ * @param {Object} proto - 作为新创建对象的原型的对象
+ * @param {Object} propertiesObject - 可选，添加到新创建对象的可枚举属性
+ * @return {Object} 新创建的对象
+ */
+function myCreate(proto, propertiesObject) {
+  // 1. 创建一个空函数（构造函数）
+  function F() {}
+
+  // 2. 将该函数的prototype指向传入的proto对象
+  F.prototype = proto;
+
+  // 3. 通过new调用该构造函数，创建一个新对象，其[[Prototype]]指向proto
+  const obj = new F();
+
+  // 4. （可选）如果传入了propertiesObject，则处理属性描述符
+  if (propertiesObject) {
+    // 使用Object.defineProperties添加属性
+    Object.defineProperties(obj, propertiesObject);
+  }
+
+  // 5. 返回新对象
+  return obj;
+}
+
+// 原型对象
+const person = {
+  greet() {
+    console.log(\`Hello, I'm \${this.name}\`);
+  },
+};
+
+// 使用手写的myCreate创建新对象
+const john = myCreate(person);
+john.name = "John";
+john.greet(); // 输出: Hello, I'm John
+
+// 检查原型链
+console.log(Object.getPrototypeOf(john) === person); // true`
+  },
+  {
+    id: "myBind",
+    title: "Function.prototype.bind实现",
+    description: "模拟Function.prototype.bind方法的实现",
+    code: `/**
+ * @description 模拟Function.prototype.bind方法实现
+ * @param {Object} thisArg - 绑定的this值
+ * @param {...any} bindArgs - 预设的参数
+ * @return {Function} 绑定后的新函数
+ */
+Function.prototype.myBind = function(thisArg, ...bindArgs) {
+  // 保存原函数（this是调用myBind的函数）
+  const originalFunc = this;
+  
+  // 定义绑定函数（返回的函数）
+  function boundFunc(...callArgs) {
+    // 合并绑定参数和调用参数
+    const allArgs = bindArgs.concat(callArgs);
+    
+    // 判断是否通过new调用（关键逻辑）
+    if (new.target === boundFunc) {
+      // new调用时，原函数作为构造函数，this指向新实例
+      return new originalFunc(...allArgs);
+    } else {
+      // 普通调用时，使用绑定的thisArg作为上下文
+      return originalFunc.apply(thisArg, allArgs);
+    }
+  }
+  
+  // 绑定函数的prototype指向原函数的prototype（保证原型链正确）
+  // 注意：必须通过Object.create来继承，避免共享原型的引用
+  boundFunc.prototype = Object.create(originalFunc.prototype);
+  
+  return boundFunc;
+};
+
+// 使用示例
+const person2 = { name: 'Alice' };
+function greet(msg) {
+  return \`\${msg}, \${this.name}\`;
+}
+
+const boundGreet = greet.myBind(person2, 'Hello');
+console.log(boundGreet()); // 输出："Hello, Alice"（this正确绑定）
+
+// 构造函数绑定示例
+function User(age) {
+  this.age = age;
+  this.intro = function() {
+    return \`I'm \${this.name}, \${this.age} years old\`;
+  };
+}
+User.prototype.name = 'Default';
+
+const BoundUser = User.myBind({ name: 'Bob' }); // 绑定thisArg为{ name: 'Bob' }
+const user = new BoundUser(20); // new调用，thisArg被忽略
+
+console.log(user.age); // 输出：20（构造函数正确初始化）
+console.log(user.intro()); // 输出："I'm Default, 20 years old"（this指向新实例，原型链正确）`
+  },
+  {
+    id: "batchInsert",
+    title: "高性能DOM批量插入",
+    description: "使用requestAnimationFrame实现高性能DOM批量插入",
+    code: `/**
+ * @description 分批插入DOM
+ * @param {Array} data - 数据数组
+ * @param {HTMLElement} container - 容器元素
+ * @param {number} batchSize - 每批插入数量
+ */
+function batchInsert(data, container, batchSize = 500) {
+  let index = 0;
+
+  function insertBatch() {
+    const fragment = document.createDocumentFragment();
+    const end = Math.min(index + batchSize, data.length);
+
+    for (; index < end; index++) {
+      const div = document.createElement('div');
+      div.textContent = data[index];
+      fragment.appendChild(div);
+    }
+
+    container.appendChild(fragment);
+
+    if (index < data.length) {
+      requestAnimationFrame(insertBatch);
+    }
+  }
+
+  insertBatch();
+}
+
+// 使用示例
+// const container = document.getElementById('container');
+// const largeDataset = Array.from({ length: 10000 }, (_, i) => \`Item \${i}\`);
+// batchInsert(largeDataset, container, 500);`
+  },
+  {
+    id: "myPromise",
+    title: "Promise实现",
+    description: "实现符合Promise/A+规范的基本Promise类",
+    code: `/**
+ * @description 自定义Promise类，模拟原生Promise的基本功能
+ */
+class MyPromise {
+  // 构造函数，接收一个执行器函数executor
+  constructor(executor) {
+    // 初始状态为pending（等待中）
+    this.state = 'pending'; 
+    // 成功时的值，状态变为fulfilled后会被赋值
+    this.value = undefined; 
+    // 失败时的原因，状态变为rejected后会被赋值
+    this.reason = undefined; 
+    // 用于存放fulfilled状态下的回调函数队列
+    this.onFulfilledCallbacks = []; 
+    // 用于存放rejected状态下的回调函数队列
+    this.onRejectedCallbacks = []; 
+
+    // 定义resolve函数，用于将Promise状态置为fulfilled
+    const resolve = (value) => {
+      // 只有状态为pending时才能改变状态
+      if (this.state === 'pending') {
+        this.state = 'fulfilled'; // 更新状态为fulfilled
+        this.value = value; // 保存成功的值
+        // 执行所有在fulfilled状态下等待的回调函数
+        this.onFulfilledCallbacks.forEach(fn => fn());
+      }
+    };
+
+    // 定义reject函数，用于将Promise状态置为rejected
+    const reject = (reason) => {
+      // 只有状态为pending时才能改变状态
+      if (this.state === 'pending') {
+        this.state = 'rejected'; // 更新状态为rejected
+        this.reason = reason; // 保存失败的原因
+        // 执行所有在rejected状态下等待的回调函数
+        this.onRejectedCallbacks.forEach(fn => fn());
+      }
+    };
+
+    try {
+      // 立即执行executor函数，并传入resolve和reject方法
+      // 注意：executor可能是同步的，也可能抛出异常
+      executor(resolve, reject);
+    } catch (err) {
+      // 如果executor执行过程中抛出错误，则捕获并调用reject
+      reject(err);
+    }
+  }
+
+  // then方法是Promise的核心，用于注册fulfilled和rejected状态的回调
+  // 并返回一个新的Promise，以支持链式调用
+  then(onFulfilled, onRejected) {
+    // 处理值穿透：如果then的参数不是函数，则提供一个默认函数实现值穿透
+    // 比如：promise.then(123)应该把123直接传递给下一个then
+    onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : value => value;
+    onRejected = typeof onRejected === 'function' ? onRejected : reason => { throw reason; };
+
+    // then方法必须返回一个新的Promise，以实现链式调用
+    const promise2 = new MyPromise((resolve, reject) => {
+      // 封装公共的回调处理逻辑，避免重复代码
+      const handleCallback = (callback, valueOrReason, resolve, reject) => {
+        // 使用setTimeout模拟异步执行
+        setTimeout(() => {
+          try {
+            // 执行用户传入的回调函数，并得到返回值x
+            const x = callback(valueOrReason);
+            // 尝试resolve新的Promise
+            resolve(x);
+          } catch (err) {
+            // 如果回调执行出错，则reject新的Promise
+            reject(err);
+          }
+        }, 0);
+      };
+
+      // 如果当前Promise的状态已经是fulfilled
+      if (this.state === 'fulfilled') {
+        // 异步执行onFulfilled回调，并处理返回值和新的Promise
+        handleCallback(onFulfilled, this.value, resolve, reject);
+      } 
+      // 如果当前Promise的状态已经是rejected
+      else if (this.state === 'rejected') {
+        // 异步执行onRejected回调，并处理返回值和新的Promise
+        handleCallback(onRejected, this.reason, resolve, reject);
+      } 
+      // 如果当前Promise的状态还是pending（即executor是异步的，还未调用resolve/reject）
+      else if (this.state === 'pending') {
+        // 将onFulfilled回调推入队列，等状态变成fulfilled后再执行
+        this.onFulfilledCallbacks.push(() => {
+          handleCallback(onFulfilled, this.value, resolve, reject);
+        });
+        // 将onRejected回调推入队列，等状态变成rejected后再执行
+        this.onRejectedCallbacks.push(() => {
+          handleCallback(onRejected, this.reason, resolve, reject);
+        });
+      }
+    });
+
+    // then方法必须返回一个新的Promise对象
+    return promise2;
+  }
+}
+
+// 使用示例
+const p = new MyPromise((resolve, reject) => {
+  setTimeout(() => {
+    resolve('成功啦！');
+  }, 1000);
+});
+
+p.then(
+  value => {
+    console.log(value); // 1秒后输出：成功啦！
+    return '链式调用';
+  },
+  reason => {
+    console.error(reason);
+  }
+).then(value => {
+  console.log(value); // 输出：链式调用
+});`
+  },
+  {
+    id: "findThreeSum",
+    title: "三数之和问题",
+    description: "找出数组中三个数之和等于目标值的组合",
+    code: `/**
+ * @description 找出数组中三个数之和等于目标值的组合
+ * @param {number[]} nums - 数字数组
+ * @param {number} target - 目标和
+ * @return {number[]} 三个数的数组，或空数组
+ * @time O(n²) - 排序O(nlogn) + 双指针O(n²)
+ * @space O(1) - 不考虑排序的空间，只使用常数级额外空间
+ */
+function findThreeSum(nums, target) {
+  const n = nums.length;
+  
+  // 1. 先排序（便于双指针操作）
+  nums.sort((a, b) => a - b);
+
+  for (let i = 0; i < n - 2; i++) {
+    const current = nums[i];
+    const need = target - current;
+
+    let left = i + 1;
+    let right = n - 1;
+
+    while (left < right) {
+      const sum = nums[left] + nums[right];
+
+      if (sum === need) {
+        // 找到一个解就返回
+        return [current, nums[left], nums[right]];
+      } else if (sum < need) {
+        left++; // 需要更大的数
+      } else {
+        right--; // 需要更小的数
+      }
+    }
+  }
+
+  // 如果没有找到，返回空数组
+  return [];
+}
+
+// 示例测试
+const nums = [1, 5, 8, 10, 12];
+const target = 19;
+
+const result = findThreeSum(nums, target);
+console.log(result); // 输出: [1, 8, 10]`
   }
 ];
 
