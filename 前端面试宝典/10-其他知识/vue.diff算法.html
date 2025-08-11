@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue Diff算法可视化工具</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .demo-area { flex: 1; min-width: 300px; background: #f5f5f5; padding: 20px; border-radius: 8px; }
+        .code-area { flex: 1; min-width: 300px; }
+        .log-area { margin-top: 20px; background: #2d2d2d; color: #f0f0f0; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; }
+        pre { background: #f0f0f0; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        code { font-family: 'Consolas', monospace; }
+        button { padding: 8px 16px; background: #42b983; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #359469; }
+        .list-display { margin: 20px 0; padding: 15px; background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .list-item { display: inline-block; margin: 5px; padding: 8px 12px; background: #e0f2f1; border-radius: 4px; transition: all 0.3s ease; }
+        .list-item.moved { background: #fff8e1; }
+        .list-item.added { background: #e8f5e9; }
+        .list-item.removed { background: #ffebee; text-decoration: line-through; opacity: 0.5; }
+        .log-entry { margin: 5px 0; padding-left: 10px; border-left: 2px solid #42b983; }
+        .diff-log { color: #61dafb; }
+        .patch-log { color: #a5de37; }
+        .move-log { color: #d19a66; }
+        .add-log { color: #8dd1e1; }
+        .remove-log { color: #e06c75; }
+        .old-list, .new-list { margin-bottom: 15px; }
+        .list-title { font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Vue Diff算法可视化工具</h1>
+    <div class="container">
+        <div class="demo-area">
+            <h2>演示区域</h2>
+            <div class="list-display old-list">
+                <div class="list-title">旧列表</div>
+                <div id="oldList"></div>
+            </div>
+            <div class="list-display new-list">
+                <div class="list-title">新列表</div>
+                <div id="newList"></div>
+            </div>
+            <div>
+                <button onclick="runDiff1()">案例1: 简单调换顺序</button>
+                <button onclick="runDiff2()">案例2: 增删元素</button>
+                <button onclick="runDiff3()">案例3: 复杂重排</button>
+                <button onclick="runDiff4()">案例4: 相同元素</button>
+                <button onclick="clearLog()">清空日志</button>
+            </div>
+            <div class="log-area" id="log">
+                <div class="log-entry">Diff过程日志将显示在这里...</div>
+            </div>
+        </div>
+        <div class="code-area">
+            <h2>核心代码 (简化版Vue2 Diff算法)</h2>
+            <pre><code>// 简化版Vue2 Diff算法实现
+
+// 1. 虚拟节点类
+class VNode {
+  constructor(key, value) {
+    this.key = key;
+    this.value = value;
+  }
+}
+
+// 2. 创建虚拟节点数组
+function createVNodes(data) {
+  return data.map(item => new VNode(item.key, item.value));
+}
+
+// 3. Diff算法核心实现
+function diff(oldVNodes, newVNodes) {
+  log('[Diff开始] 比较新旧列表', 'diff-log');
+  
+  // 为旧节点创建key到索引的映射
+  const oldKeyMap = createKeyMap(oldVNodes);
+  
+  // 双指针初始化
+  let oldStartIdx = 0;
+  let oldEndIdx = oldVNodes.length - 1;
+  let newStartIdx = 0;
+  let newEndIdx = newVNodes.length - 1;
+  
+  // 双指针比较
+  while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+    // 情况1: 旧头与新头相同
+    if (isSameVNode(oldVNodes[oldStartIdx], newVNodes[newStartIdx])) {
+      log(`[头头比较] 节点 ${oldVNodes[oldStartIdx].key} 匹配，无需移动`, 'diff-log');
+      patchVNode(oldVNodes[oldStartIdx], newVNodes[newStartIdx]);
+      oldStartIdx++;
+      newStartIdx++;
+    }
+    // 情况2: 旧尾与新尾相同
+    else if (isSameVNode(oldVNodes[oldEndIdx], newVNodes[newEndIdx])) {
+      log(`[尾尾比较] 节点 ${oldVNodes[oldEndIdx].key} 匹配，无需移动`, 'diff-log');
+      patchVNode(oldVNodes[oldEndIdx], newVNodes[newEndIdx]);
+      oldEndIdx--;
+      newEndIdx--;
+    }
+    // 情况3: 旧头与新尾相同
+    else if (isSameVNode(oldVNodes[oldStartIdx], newVNodes[newEndIdx])) {
+      log(`[头尾比较] 节点 ${oldVNodes[oldStartIdx].key} 匹配，需要移动到末尾`, 'move-log');
+      patchVNode(oldVNodes[oldStartIdx], newVNodes[newEndIdx]);
+      // 移动节点到旧列表末尾
+      moveNode(oldVNodes, oldStartIdx, oldEndIdx);
+      oldStartIdx++;
+      newEndIdx--;
+    }
+    // 情况4: 旧尾与新头相同
+    else if (isSameVNode(oldVNodes[oldEndIdx], newVNodes[newStartIdx])) {
+      log(`[尾头比较] 节点 ${oldVNodes[oldEndIdx].key} 匹配，需要移动到开头`, 'move-log');
+      patchVNode(oldVNodes[oldEndIdx], newVNodes[newStartIdx]);
+      // 移动节点到旧列表开头
+      moveNode(oldVNodes, oldEndIdx, oldStartIdx);
+      oldEndIdx--;
+      newStartIdx++;
+    }
+    // 情况5: 索引比较
+    else {
+      const newKey = newVNodes[newStartIdx].key;
+      const oldIdx = oldKeyMap[newKey];
+      
+      if (oldIdx !== undefined) {
+        // 找到匹配的节点
+        log(`[索引比较] 节点 ${newKey} 在旧列表中的索引为 ${oldIdx}，需要移动`, 'move-log');
+        patchVNode(oldVNodes[oldIdx], newVNodes[newStartIdx]);
+        // 移动节点到当前旧列表开头
+        moveNode(oldVNodes, oldIdx, oldStartIdx);
+      } else {
+        // 没找到匹配的节点，添加新节点
+        log(`[索引比较] 节点 ${newKey} 在旧列表中不存在，需要新增`, 'add-log');
+        oldVNodes.splice(oldStartIdx, 0, newVNodes[newStartIdx]);
+        oldEndIdx++;
+        oldKeyMap[newKey] = oldStartIdx;
+      }
+      
+      newStartIdx++;
+    }
+  }
+  
+  // 处理剩余节点
+  if (oldStartIdx <= oldEndIdx) {
+    log(`[处理剩余节点] 删除旧列表中从索引 ${oldStartIdx} 到 ${oldEndIdx} 的节点`, 'remove-log');
+    oldVNodes.splice(oldStartIdx, oldEndIdx - oldStartIdx + 1);
+  }
+  
+  if (newStartIdx <= newEndIdx) {
+    log(`[处理剩余节点] 向旧列表中添加从索引 ${newStartIdx} 到 ${newEndIdx} 的节点`, 'add-log');
+    const newNodesToAdd = newVNodes.slice(newStartIdx, newEndIdx + 1);
+    oldVNodes.splice(oldStartIdx, 0, ...newNodesToAdd);
+    // 更新key映射
+    newNodesToAdd.forEach((node, idx) => {
+      oldKeyMap[node.key] = oldStartIdx + idx;
+    });
+  }
+  
+  log('[Diff结束] 更新后的列表: ' + oldVNodes.map(n => n.key).join(', '), 'diff-log');
+  return oldVNodes;
+}
+
+// 4. 辅助函数: 判断两个虚拟节点是否相同
+function isSameVNode(oldVNode, newVNode) {
+  return oldVNode.key === newVNode.key;
+}
+
+// 5. 辅助函数: 更新虚拟节点内容
+function patchVNode(oldVNode, newVNode) {
+  if (oldVNode.value !== newVNode.value) {
+    log(`[更新节点] 节点 ${oldVNode.key} 的值从 ${oldVNode.value} 变为 ${newVNode.value}`, 'patch-log');
+    oldVNode.value = newVNode.value;
+  }
+}
+
+// 6. 辅助函数: 创建key到索引的映射
+function createKeyMap(vNodes) {
+  const keyMap = {};
+  vNodes.forEach((node, idx) => {
+    keyMap[node.key] = idx;
+  });
+  return keyMap;
+}
+
+// 7. 辅助函数: 移动节点
+function moveNode(vNodes, fromIdx, toIdx) {
+  const node = vNodes.splice(fromIdx, 1)[0];
+  vNodes.splice(toIdx, 0, node);
+  // 更新UI
+  renderList(oldListEl, vNodes);
+}
+
+// 8. 渲染列表到DOM
+function renderList(containerEl, vNodes) {
+  containerEl.innerHTML = '';
+  vNodes.forEach(node => {
+    const itemEl = document.createElement('div');
+    itemEl.className = 'list-item';
+    itemEl.dataset.key = node.key;
+    itemEl.textContent = `${node.key}: ${node.value}`;
+    containerEl.appendChild(itemEl);
+  });
+}
+
+// 9. 日志函数
+function log(message, type = 'log-entry') {
+  const logElement = document.getElementById('log');
+  const time = new Date().toLocaleTimeString();
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.innerHTML = `[${time}] ${message}`;
+  logElement.appendChild(entry);
+  logElement.scrollTop = logElement.scrollHeight;
+}
+
+// 10. 测试用例
+function runDiff1() {
+  clearLog();
+  log('=== 测试用例1: 简单调换顺序 ===', 'diff-log');
+  const oldData = [
+    { key: 'A', value: 'Item A' },
+    { key: 'B', value: 'Item B' },
+    { key: 'C', value: 'Item C' },
+    { key: 'D', value: 'Item D' }
+  ];
+  const newData = [
+    { key: 'A', value: 'Item A' },
+    { key: 'C', value: 'Item C' },
+    { key: 'B', value: 'Item B' },
+    { key: 'D', value: 'Item D' }
+  ];
+  
+  const oldVNodes = createVNodes(oldData);
+  const newVNodes = createVNodes(newData);
+  
+  renderList(oldListEl, oldVNodes);
+  renderList(newListEl, newVNodes);
+  
+  setTimeout(() => {
+    diff(oldVNodes, newVNodes);
+    renderList(oldListEl, oldVNodes);
+  }, 1000);
+}
+
+function runDiff2() {
+  clearLog();
+  log('=== 测试用例2: 增删元素 ===', 'diff-log');
+  const oldData = [
+    { key: 'A', value: 'Item A' },
+    { key: 'B', value: 'Item B' },
+    { key: 'C', value: 'Item C' }
+  ];
+  const newData = [
+    { key: 'A', value: 'Item A' },
+    { key: 'D', value: 'Item D' },
+    { key: 'C', value: 'Item C' },
+    { key: 'E', value: 'Item E' }
+  ];
+  
+  const oldVNodes = createVNodes(oldData);
+  const newVNodes = createVNodes(newData);
+  
+  renderList(oldListEl, oldVNodes);
+  renderList(newListEl, newVNodes);
+  
+  setTimeout(() => {
+    diff(oldVNodes, newVNodes);
+    renderList(oldListEl, oldVNodes);
+  }, 1000);
+}
+
+function runDiff3() {
+  clearLog();
+  log('=== 测试用例3: 复杂重排 ===', 'diff-log');
+  const oldData = [
+    { key: 'A', value: 'Item A' },
+    { key: 'B', value: 'Item B' },
+    { key: 'C', value: 'Item C' },
+    { key: 'D', value: 'Item D' },
+    { key: 'E', value: 'Item E' }
+  ];
+  const newData = [
+    { key: 'B', value: 'Item B' },
+    { key: 'C', value: 'Item C' },
+    { key: 'F', value: 'Item F' },
+    { key: 'D', value: 'Item D' },
+    { key: 'E', value: 'Item E' },
+    { key: 'A', value: 'Item A' }
+  ];
+  
+  const oldVNodes = createVNodes(oldData);
+  const newVNodes = createVNodes(newData);
+  
+  renderList(oldListEl, oldVNodes);
+  renderList(newListEl, newVNodes);
+  
+  setTimeout(() => {
+    diff(oldVNodes, newVNodes);
+    renderList(oldListEl, oldVNodes);
+  }, 1000);
+}
+
+function runDiff4() {
+  clearLog();
+  log('=== 测试用例4: 相同元素 ===', 'diff-log');
+  const oldData = [
+    { key: 'A', value: 'Item A' },
+    { key: 'B', value: 'Item B' },
+    { key: 'C', value: 'Item C' }
+  ];
+  const newData = [
+    { key: 'A', value: 'Item A' },
+    { key: 'B', value: 'Item B' },
+    { key: 'C', value: 'Item C' }
+  ];
+  
+  const oldVNodes = createVNodes(oldData);
+  const newVNodes = createVNodes(newData);
+  
+  renderList(oldListEl, oldVNodes);
+  renderList(newListEl, newVNodes);
+  
+  setTimeout(() => {
+    diff(oldVNodes, newVNodes);
+    renderList(oldListEl, oldVNodes);
+  }, 1000);
+}
+
+// 11. 清空日志
+function clearLog() {
+  document.getElementById('log').innerHTML = '';
+  log('日志已清空', 'diff-log');
+}
+
+// 12. 初始化
+const oldListEl = document.getElementById('oldList');
+const newListEl = document.getElementById('newList');
+
+// 初始渲染
+runDiff1();
+</code></pre>
+        </div>
+    </div>
+    <script>
+        // 简化版Vue2 Diff算法实现
+
+        // 1. 虚拟节点类
+        class VNode {
+          constructor(key, value) {
+            this.key = key;
+            this.value = value;
+          }
+        }
+
+        // 2. 创建虚拟节点数组
+        function createVNodes(data) {
+          return data.map(item => new VNode(item.key, item.value));
+        }
+
+        // 3. Diff算法核心实现
+        function diff(oldVNodes, newVNodes) {
+          log('[Diff开始] 比较新旧列表', 'diff-log');
+          
+          // 为旧节点创建key到索引的映射
+          const oldKeyMap = createKeyMap(oldVNodes);
+          
+          // 双指针初始化
+          let oldStartIdx = 0;
+          let oldEndIdx = oldVNodes.length - 1;
+          let newStartIdx = 0;
+          let newEndIdx = newVNodes.length - 1;
+          
+          // 双指针比较
+          while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+            // 情况1: 旧头与新头相同
+            if (isSameVNode(oldVNodes[oldStartIdx], newVNodes[newStartIdx])) {
+              log(`[头头比较] 节点 ${oldVNodes[oldStartIdx].key} 匹配，无需移动`, 'diff-log');
+              patchVNode(oldVNodes[oldStartIdx], newVNodes[newStartIdx]);
+              oldStartIdx++;
+              newStartIdx++;
+            }
+            // 情况2: 旧尾与新尾相同
+            else if (isSameVNode(oldVNodes[oldEndIdx], newVNodes[newEndIdx])) {
+              log(`[尾尾比较] 节点 ${oldVNodes[oldEndIdx].key} 匹配，无需移动`, 'diff-log');
+              patchVNode(oldVNodes[oldEndIdx], newVNodes[newEndIdx]);
+              oldEndIdx--;
+              newEndIdx--;
+            }
+            // 情况3: 旧头与新尾相同
+            else if (isSameVNode(oldVNodes[oldStartIdx], newVNodes[newEndIdx])) {
+              log(`[头尾比较] 节点 ${oldVNodes[oldStartIdx].key} 匹配，需要移动到末尾`, 'move-log');
+              patchVNode(oldVNodes[oldStartIdx], newVNodes[newEndIdx]);
+              // 移动节点到旧列表末尾
+              moveNode(oldVNodes, oldStartIdx, oldEndIdx);
+              oldStartIdx++;
+              newEndIdx--;
+            }
+            // 情况4: 旧尾与新头相同
+            else if (isSameVNode(oldVNodes[oldEndIdx], newVNodes[newStartIdx])) {
+              log(`[尾头比较] 节点 ${oldVNodes[oldEndIdx].key} 匹配，需要移动到开头`, 'move-log');
+              patchVNode(oldVNodes[oldEndIdx], newVNodes[newStartIdx]);
+              // 移动节点到旧列表开头
+              moveNode(oldVNodes, oldEndIdx, oldStartIdx);
+              oldEndIdx--;
+              newStartIdx++;
+            }
+            // 情况5: 索引比较
+            else {
+              const newKey = newVNodes[newStartIdx].key;
+              const oldIdx = oldKeyMap[newKey];
+              
+              if (oldIdx !== undefined) {
+                // 找到匹配的节点
+                log(`[索引比较] 节点 ${newKey} 在旧列表中的索引为 ${oldIdx}，需要移动`, 'move-log');
+                patchVNode(oldVNodes[oldIdx], newVNodes[newStartIdx]);
+                // 移动节点到当前旧列表开头
+                moveNode(oldVNodes, oldIdx, oldStartIdx);
+              } else {
+                // 没找到匹配的节点，添加新节点
+                log(`[索引比较] 节点 ${newKey} 在旧列表中不存在，需要新增`, 'add-log');
+                oldVNodes.splice(oldStartIdx, 0, newVNodes[newStartIdx]);
+                oldEndIdx++;
+                oldKeyMap[newKey] = oldStartIdx;
+              }
+              
+              newStartIdx++;
+            }
+          }
+          
+          // 处理剩余节点
+          if (oldStartIdx <= oldEndIdx) {
+            log(`[处理剩余节点] 删除旧列表中从索引 ${oldStartIdx} 到 ${oldEndIdx} 的节点`, 'remove-log');
+            oldVNodes.splice(oldStartIdx, oldEndIdx - oldStartIdx + 1);
+          }
+          
+          if (newStartIdx <= newEndIdx) {
+            log(`[处理剩余节点] 向旧列表中添加从索引 ${newStartIdx} 到 ${newEndIdx} 的节点`, 'add-log');
+            const newNodesToAdd = newVNodes.slice(newStartIdx, newEndIdx + 1);
+            oldVNodes.splice(oldStartIdx, 0, ...newNodesToAdd);
+            // 更新key映射
+            newNodesToAdd.forEach((node, idx) => {
+              oldKeyMap[node.key] = oldStartIdx + idx;
+            });
+          }
+          
+          log('[Diff结束] 更新后的列表: ' + oldVNodes.map(n => n.key).join(', '), 'diff-log');
+          return oldVNodes;
+        }
+
+        // 4. 辅助函数: 判断两个虚拟节点是否相同
+        function isSameVNode(oldVNode, newVNode) {
+          return oldVNode.key === newVNode.key;
+        }
+
+        // 5. 辅助函数: 更新虚拟节点内容
+        function patchVNode(oldVNode, newVNode) {
+          if (oldVNode.value !== newVNode.value) {
+            log(`[更新节点] 节点 ${oldVNode.key} 的值从 ${oldVNode.value} 变为 ${newVNode.value}`, 'patch-log');
+            oldVNode.value = newVNode.value;
+          }
+        }
+
+        // 6. 辅助函数: 创建key到索引的映射
+        function createKeyMap(vNodes) {
+          const keyMap = {};
+          vNodes.forEach((node, idx) => {
+            keyMap[node.key] = idx;
+          });
+          return keyMap;
+        }
+
+        // 7. 辅助函数: 移动节点
+        function moveNode(vNodes, fromIdx, toIdx) {
+          const node = vNodes.splice(fromIdx, 1)[0];
+          vNodes.splice(toIdx, 0, node);
+          // 更新UI
+          renderList(oldListEl, vNodes);
+        }
+
+        // 8. 渲染列表到DOM
+        function renderList(containerEl, vNodes) {
+          containerEl.innerHTML = '';
+          vNodes.forEach(node => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'list-item';
+            itemEl.dataset.key = node.key;
+            itemEl.textContent = `${node.key}: ${node.value}`;
+            containerEl.appendChild(itemEl);
+          });
+        }
+
+        // 9. 日志函数
+        function log(message, type = 'log-entry') {
+          const logElement = document.getElementById('log');
+          const time = new Date().toLocaleTimeString();
+          const entry = document.createElement('div');
+          entry.className = `log-entry ${type}`;
+          entry.innerHTML = `[${time}] ${message}`;
+          logElement.appendChild(entry);
+          logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        // 10. 测试用例
+        function runDiff1() {
+          clearLog();
+          log('=== 测试用例1: 简单调换顺序 ===', 'diff-log');
+          const oldData = [
+            { key: 'A', value: 'Item A' },
+            { key: 'B', value: 'Item B' },
+            { key: 'C', value: 'Item C' },
+            { key: 'D', value: 'Item D' }
+          ];
+          const newData = [
+            { key: 'A', value: 'Item A' },
+            { key: 'C', value: 'Item C' },
+            { key: 'B', value: 'Item B' },
+            { key: 'D', value: 'Item D' }
+          ];
+          
+          const oldVNodes = createVNodes(oldData);
+          const newVNodes = createVNodes(newData);
+          
+          renderList(oldListEl, oldVNodes);
+          renderList(newListEl, newVNodes);
+          
+          setTimeout(() => {
+            diff(oldVNodes, newVNodes);
+            renderList(oldListEl, oldVNodes);
+          }, 1000);
+        }
+
+        function runDiff2() {
+          clearLog();
+          log('=== 测试用例2: 增删元素 ===', 'diff-log');
+          const oldData = [
+            { key: 'A', value: 'Item A' },
+            { key: 'B', value: 'Item B' },
+            { key: 'C', value: 'Item C' }
+          ];
+          const newData = [
+            { key: 'A', value: 'Item A' },
+            { key: 'D', value: 'Item D' },
+            { key: 'C', value: 'Item C' },
+            { key: 'E', value: 'Item E' }
+          ];
+          
+          const oldVNodes = createVNodes(oldData);
+          const newVNodes = createVNodes(newData);
+          
+          renderList(oldListEl, oldVNodes);
+          renderList(newListEl, newVNodes);
+          
+          setTimeout(() => {
+            diff(oldVNodes, newVNodes);
+            renderList(oldListEl, oldVNodes);
+          }, 1000);
+        }
+
+        function runDiff3() {
+          clearLog();
+          log('=== 测试用例3: 复杂重排 ===', 'diff-log');
+          const oldData = [
+            { key: 'A', value: 'Item A' },
+            { key: 'B', value: 'Item B' },
+            { key: 'C', value: 'Item C' },
+            { key: 'D', value: 'Item D' },
+            { key: 'E', value: 'Item E' }
+          ];
+          const newData = [
+            { key: 'B', value: 'Item B' },
+            { key: 'C', value: 'Item C' },
+            { key: 'F', value: 'Item F' },
+            { key: 'D', value: 'Item D' },
+            { key: 'E', value: 'Item E' },
+            { key: 'A', value: 'Item A' }
+          ];
+          
+          const oldVNodes = createVNodes(oldData);
+          const newVNodes = createVNodes(newData);
+          
+          renderList(oldListEl, oldVNodes);
+          renderList(newListEl, newVNodes);
+          
+          setTimeout(() => {
+            diff(oldVNodes, newVNodes);
+            renderList(oldListEl, oldVNodes);
+          }, 1000);
+        }
+
+        function runDiff4() {
+          clearLog();
+          log('=== 测试用例4: 相同元素 ===', 'diff-log');
+          const oldData = [
+            { key: 'A', value: 'Item A' },
+            { key: 'B', value: 'Item B' },
+            { key: 'C', value: 'Item C' }
+          ];
+          const newData = [
+            { key: 'A', value: 'Item A' },
+            { key: 'B', value: 'Item B' },
+            { key: 'C', value: 'Item C' }
+          ];
+          
+          const oldVNodes = createVNodes(oldData);
+          const newVNodes = createVNodes(newData);
+          
+          renderList(oldListEl, oldVNodes);
+          renderList(newListEl, newVNodes);
+          
+          setTimeout(() => {
+            diff(oldVNodes, newVNodes);
+            renderList(oldListEl, oldVNodes);
+          }, 1000);
+        }
+
+        // 11. 清空日志
+        function clearLog() {
+          document.getElementById('log').innerHTML = '';
+          log('日志已清空', 'diff-log');
+        }
+
+        // 12. 初始化
+        const oldListEl = document.getElementById('oldList');
+        const newListEl = document.getElementById('newList');
+
+        // 初始渲染
+        runDiff1();
+    </script>
+</body>
+</html>
