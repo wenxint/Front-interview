@@ -54,7 +54,7 @@ const flatArr = [
 
 const tree = buildTree(flatArr);
 console.log(JSON.stringify(tree, null, 2));
-// 输出树形结构，每个节点包含其子节点的children数组`
+// 输出树形结构，每个节点包含其子节点的children数组`,
   },
 
   {
@@ -116,7 +116,7 @@ const flatData = [
 ];
 
 const optimizedTree = buildTreeOptimized(flatData);
-console.log('优化版树形结构:', JSON.stringify(optimizedTree, null, 2));`
+console.log('优化版树形结构:', JSON.stringify(optimizedTree, null, 2));`,
   },
 
   {
@@ -195,7 +195,7 @@ console.log(merge([[1, 3], [2, 6], [8, 10], [15, 18]]));
 // 更多测试案例
 console.log(merge([[1, 3], [2, 6], [8, 10], [15, 18]]));
 console.log(merge([[1, 4], [0, 4]])); // [[0, 4]]
-console.log(merge([[1, 4], [2, 3]])); // [[1, 4]]`
+console.log(merge([[1, 4], [2, 3]])); // [[1, 4]]`,
   },
 
   {
@@ -288,7 +288,7 @@ console.time('排序方法');
 for(let i = 0; i < 10000; i++) {
   findLongestBySort(stringArray);
 }
-console.timeEnd('排序方法');`
+console.timeEnd('排序方法');`,
   },
 
   {
@@ -433,12 +433,11 @@ console.timeEnd('未优化版本');
 
 console.time('记忆化版本');
 console.log('结果:', fibonacci(35));
-console.timeEnd('记忆化版本');`
+console.timeEnd('记忆化版本');`,
   },
 
-
-
-  { id: "reverseList",
+  {
+    id: "reverseList",
     title: "反转链表",
     description: "单链表反转的实现",
     code: `/**
@@ -460,7 +459,7 @@ function reverseList(head) {
   }
 
   return prev; // 最终 prev 是新链表的头节点
-}`
+}`,
   },
   {
     id: "dfsTraversal",
@@ -485,7 +484,7 @@ function dfs(row, col) {
   dfs(row + 1, col); // 下
   dfs(row, col - 1); // 左
   dfs(row, col + 1); // 右
-}`
+}`,
   },
   {
     id: "buildTreeAndTraverse",
@@ -557,7 +556,7 @@ function bfsTree(root) {
   }
 
   return result; // 返回遍历顺序的节点数组
-}`
+}`,
   },
   {
     id: "promiseRace",
@@ -586,7 +585,7 @@ function promiseRace(promises) {
       )
     );
   });
-}`
+}`,
   },
   {
     id: "promiseAny",
@@ -625,7 +624,7 @@ function myPromiseAny(arr) {
         });
     });
   });
-}`
+}`,
   },
   // 以下是从常看2js.js文件424-589行添加的代码
   {
@@ -668,7 +667,7 @@ console.log(compareVersions('1.2.3', '1.2.4')); // -1
 console.log(compareVersions('1.2.3', '1.2.3')); // 0
 console.log(compareVersions('1.2.4', '1.2.3')); // 1
 console.log(compareVersions('1.2', '1.2.0')); // 0
-console.log(compareVersions('1.10', '1.2')); // 1`  
+console.log(compareVersions('1.10', '1.2')); // 1`,
   },
   {
     id: "addLargeNumbers",
@@ -708,7 +707,7 @@ function bigNumberAdd(num1, num2) {
 // 测试用例
 console.log(addLargeNumbers('123456789', '987654321')); // 1111111110
 console.log(addLargeNumbers('999', '1')); // 1000
-console.log(addLargeNumbers('0', '0')); // 0`  
+console.log(addLargeNumbers('0', '0')); // 0`,
   },
   {
     id: "sum",
@@ -753,7 +752,7 @@ try {
   sum([1, 2, '3', 4]);
 } catch (error) {
   console.log(error.message); // Array elements must be numbers
-}`  
+}`,
   },
   {
     id: "retryRequest",
@@ -794,7 +793,7 @@ async function retryRequest(url, options = {}, maxRetries = 3) {
 // retryRequest('https://api.example.com/data')
 //   .then(response => response.json())
 //   .then(data => console.log(data))
-//   .catch(error => console.error('Final error:', error));`  
+//   .catch(error => console.error('Final error:', error));`,
   },
   {
     id: "xmlHttpRequestExample",
@@ -849,7 +848,7 @@ function xmlHttpRequestExample(method, url, data) {
 // 
 // xmlHttpRequestExample('POST', 'https://api.example.com/data', { key: 'value' })
 //   .then(data => console.log(data))
-//   .catch(error => console.error(error));`  
+//   .catch(error => console.error(error));`,
   },
   {
     id: "promiseFinally",
@@ -888,7 +887,7 @@ Promise.prototype.myFinally = function(callback) {
 //   })
 //   .catch(error => {
 //     console.log('Rejected with error:', error.message);
-//   });`  
+//   });`,
   },
   {
     id: "runGenerator",
@@ -944,7 +943,38 @@ function* getDataGenerator() {
 }
 
 // 使用自动执行器来运行这个Generator
-runGenerator(getDataGenerator);`
+runGenerator(getDataGenerator);
+
+function* myGenerator() {
+  console.log('开始执行');
+
+  const x = yield '第一步：yield 返回值';
+  console.log('接收到第一个 next 的参数:', x);
+
+  const y = yield '第二步：yield 返回值';
+  console.log('接收到第二个 next 的参数:', y);
+
+  return '完成';
+}
+
+// 1. 调用 Generator 函数，返回一个 Generator 对象
+const gen = myGenerator();
+
+// 2. 第一次调用 next() —— 启动函数，执行到第一个 yield
+console.log(gen.next()); 
+// 输出：开始执行
+// 输出：{ value: '第一步：yield 返回值', done: false }
+
+// 3. 第二次调用 next(100) —— 传入的 100 是第一个 yield 的返回值，赋值给 x
+console.log(gen.next(100)); 
+// 输出：接收到第一个 next 的参数: 100
+// 输出：{ value: '第二步：yield 返回值', done: false }
+
+// 4. 第三次调用 next(200) —— 传入的 200 是第二个 yield 的返回值，赋值给 y
+console.log(gen.next(200));
+// 输出：接收到第二个 next 的参数: 200
+// 输出：{ value: '完成', done: true }
+`,
   },
   {
     id: "myCreate",
@@ -989,7 +1019,7 @@ john.name = "John";
 john.greet(); // 输出: Hello, I'm John
 
 // 检查原型链
-console.log(Object.getPrototypeOf(john) === person); // true`
+console.log(Object.getPrototypeOf(john) === person); // true`,
   },
   {
     id: "myBind",
@@ -1049,7 +1079,7 @@ const BoundUser = User.myBind({ name: 'Bob' }); // 绑定thisArg为{ name: 'Bob'
 const user = new BoundUser(20); // new调用，thisArg被忽略
 
 console.log(user.age); // 输出：20（构造函数正确初始化）
-console.log(user.intro()); // 输出："I'm Default, 20 years old"（this指向新实例，原型链正确）`
+console.log(user.intro()); // 输出："I'm Default, 20 years old"（this指向新实例，原型链正确）`,
   },
   {
     id: "batchInsert",
@@ -1087,7 +1117,7 @@ function batchInsert(data, container, batchSize = 500) {
 // 使用示例
 // const container = document.getElementById('container');
 // const largeDataset = Array.from({ length: 10000 }, (_, i) => \`Item \${i}\`);
-// batchInsert(largeDataset, container, 500);`
+// batchInsert(largeDataset, container, 500);`,
   },
   {
     id: "myPromise",
@@ -1213,7 +1243,7 @@ p.then(
   }
 ).then(value => {
   console.log(value); // 输出：链式调用
-});`
+});`,
   },
   {
     id: "findThreeSum",
@@ -1263,8 +1293,8 @@ const nums = [1, 5, 8, 10, 12];
 const target = 19;
 
 const result = findThreeSum(nums, target);
-console.log(result); // 输出: [1, 8, 10]`
-  }
+console.log(result); // 输出: [1, 8, 10]`,
+  },
 ];
 
 //如果需要与原data.js合并，可以这样使用：
