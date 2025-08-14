@@ -2280,3 +2280,25 @@ const cards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 console.log("打乱前:", cards);
 fisherYatesShuffle(cards);
 console.log("打乱后:", cards);
+
+function nextGreaterElements(nums) {
+  const n = nums.length;
+  const result = new Array(n).fill(-1); // 默认没有更大的，就是 -1
+  const stack = []; // 栈中存索引
+
+  for (let i = 0; i < n; i++) {
+    // 当前元素
+    const current = nums[i];
+
+    // 只要栈不为空，且当前元素 > 栈顶索引对应的元素
+    while (stack.length > 0 && nums[stack[stack.length - 1]] < current) {
+      const topIndex = stack.pop(); // 栈顶索引
+      result[topIndex] = current; // 当前元素就是它的下一个更大元素
+    }
+
+    // 当前索引入栈
+    stack.push(i);
+  }
+
+  return result;
+}
