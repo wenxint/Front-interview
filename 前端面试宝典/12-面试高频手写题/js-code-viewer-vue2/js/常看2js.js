@@ -672,12 +672,12 @@ console.log(Object.getPrototypeOf(john) === person); // true
 Function.prototype.myBind = function(thisArg, ...bindArgs) {
   // 保存原函数（this 是调用 myBind 的函数）
   const originalFunc = this;
-  
+
   // 定义绑定函数（返回的函数）
   function boundFunc(...callArgs) {
     // 合并绑定参数和调用参数
     const allArgs = bindArgs.concat(callArgs);
-    
+
     // 判断是否通过 new 调用（关键逻辑）
     if (new.target === boundFunc) {
       // new 调用时，原函数作为构造函数，this 指向新实例
@@ -688,11 +688,11 @@ Function.prototype.myBind = function(thisArg, ...bindArgs) {
       return originalFunc.apply(thisArg, allArgs);
     }
   }
-  
+
   // 绑定函数的 prototype 指向原函数的 prototype（保证原型链正确）
   // 注意：必须通过 Object.create 来继承，避免共享原型的引用
   boundFunc.prototype = Object.create(originalFunc.prototype);
-  
+
   return boundFunc;
 };
 const person2 = { name: 'Alice' };
@@ -759,15 +759,15 @@ class MyPromise {
   // 构造函数，接收一个执行器函数 executor
   constructor(executor) {
     // 初始状态为 pending（等待中）
-    this.state = 'pending'; 
+    this.state = 'pending';
     // 成功时的值，状态变为 fulfilled 后会被赋值
-    this.value = undefined; 
+    this.value = undefined;
     // 失败时的原因，状态变为 rejected 后会被赋值
-    this.reason = undefined; 
+    this.reason = undefined;
     // 用于存放 fulfilled 状态下的回调函数队列
-    this.onFulfilledCallbacks = []; 
+    this.onFulfilledCallbacks = [];
     // 用于存放 rejected 状态下的回调函数队列
-    this.onRejectedCallbacks = []; 
+    this.onRejectedCallbacks = [];
 
     // 定义 resolve 函数，用于将 Promise 状态置为 fulfilled
     const resolve = (value) => {
@@ -834,12 +834,12 @@ class MyPromise {
       if (this.state === 'fulfilled') {
         // 异步执行 onFulfilled 回调，并处理返回值和新的 Promise
         handleCallback(onFulfilled, this.value, resolve, reject);
-      } 
+      }
       // 如果当前 Promise 的状态已经是 rejected
       else if (this.state === 'rejected') {
         // 异步执行 onRejected 回调，并处理返回值和新的 Promise
         handleCallback(onRejected, this.reason, resolve, reject);
-      } 
+      }
       // 如果当前 Promise 的状态还是 pending（即 executor 是异步的，还未调用 resolve/reject）
       else if (this.state === 'pending') {
         // 将 onFulfilled 回调推入队列，等状态变成 fulfilled 后再执行
@@ -878,7 +878,7 @@ p.then(
 
 function findThreeSum(nums, target) {
   const n = nums.length;
-  
+
   // 1. 先排序（便于双指针操作）
   nums.sort((a, b) => a - b);
 
@@ -913,3 +913,59 @@ const target = 19;
 
 const result = findThreeSum(nums, target);
 console.log(result); // 输出可能是 [1, 8, 10] 或 [5, 8, 6]（但这里正好是 [1, 8, 10] = 19）
+
+
+class AnalyzeWebpackPlugin {
+  apply(compiler) {
+      //  markdown表格的头部
+      let content = `| filename | size |
+| --- | --- |
+`
+      // 注册emit钩子
+      compiler.hooks.emit.tap('AnalyzeWebpackPlugin', (compliaction) => {
+          const arr = []
+          // 获取所有即将输出的资源
+          Object.keys(compliaction.assets).forEach(filename => {
+              const file = compliaction.assets[filename]
+              // 资源大小转换为kb
+              const obj = { filename, size: Math.ceil(file.size() / 1024) }
+              arr.push(obj)
+          })
+          // 降序
+          arr.sort((a, b) => b.size - a.size)
+          arr.forEach(item => {
+              const { filename, size } = item
+              const str = `| ${filename} | ${size}kb |`
+              content += str + "\n"
+          })
+          // 输出markdown文件
+          compliaction.assets['analyze.md'] = {
+              source() {
+                  return content
+              },
+              size() {
+                  return content.length
+              }
+          }
+      })
+  }
+}
+
+module.exports = AnalyzeWebpackPlugin
+
+
+
+// ws 表示非加密，wss 表示加密（类似 https）
+const socket = new WebSocket('ws://localhost:8080/ws');
+socket.addEventListener('open', (event) => {
+  console.log('WebSocket 连接已建立');
+  socket.send('Hello, Server!');
+});
+
+socket.addEventListener('message', (event) => {
+  console.log('收到服务器消息:', event.data);
+});
+socket.addEventListener('close', (event) => {
+  console.log('WebSocket 连接已关闭');
+});
+
