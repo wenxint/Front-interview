@@ -969,3 +969,46 @@ socket.addEventListener('close', (event) => {
   console.log('WebSocket 连接已关闭');
 });
 
+Promise.myAllSettled = function(promises) {
+  return new Promise((resolve) => {
+    // 如果传入的不是可迭代对象，直接返回 resolved promise
+    if (promises == null || typeof promises[Symbol.iterator] !== 'function') {
+      return resolve([]);
+    }
+    
+    const results = [];
+    let completedCount = 0;
+    const promisesArray = Array.from(promises);
+    const total = promisesArray.length;
+    
+    // 如果传入空数组，直接返回空结果
+    if (total === 0) {
+      return resolve([]);
+    }
+    
+    promisesArray.forEach((promise, index) => {
+      // 确保每个值都是 Promise
+      Promise.resolve(promise)
+        .then(value => {
+          results[index] = {
+            status: 'fulfilled',
+            value: value
+          };
+        })
+        .catch(reason => {
+          results[index] = {
+            status: 'rejected',
+            reason: reason
+          };
+        })
+        .finally(() => {
+          completedCount++;
+          // 所有 Promise 都已完成
+          if (completedCount === total) {
+            resolve(results);
+          }
+        });
+    });
+  });
+};
+
